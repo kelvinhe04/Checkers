@@ -2,7 +2,8 @@
 // Vista de una partida en curso. Tablero + estado + WS sync.
 // =========================================================================
 
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { Bot, Dices, Handshake, Skull, Trophy } from "lucide-react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   SignedIn,
   SignedOut,
@@ -20,6 +21,7 @@ import {
 import { Board } from "../components/Board.js";
 import { api } from "../lib/api.js";
 import { env } from "../lib/env.js";
+import { playCaptureSound, playMoveSound } from "../lib/sounds.js";
 import { getSkin, readSkinId } from "../lib/skins.js";
 import { openGameSocket } from "../lib/ws.js";
 
@@ -41,6 +43,9 @@ export function GamePage() {
   );
 }
 
+/** Pausa antes de mostrar el movimiento de la IA para que se perciba natural. */
+const AI_MOVE_DELAY_MS = 550;
+
 function GameInner() {
   const { gameId } = useParams({ from: "/game/$gameId" });
   const auth = useAuth();
@@ -56,12 +61,6 @@ function GameInner() {
   );
   /** Si entramos por primera vez en moveCount=0, ejecutamos la animación de reparto una sola vez. */
   const [dealing, setDealing] = useState(false);
-
-  // Marca el body para que la scrollbar use el tema verde mesa.
-  useLayoutEffect(() => {
-    document.body.classList.add("game-page-active");
-    return () => document.body.classList.remove("game-page-active");
-  }, []);
 
   const premium =
     (user?.publicMetadata?.premium as boolean | undefined) ?? false;
@@ -114,8 +113,27 @@ function GameInner() {
               setAwaitingAi(true);
               break;
             case "move_applied":
-              setSnapshot(e.snapshot);
-              setAwaitingAi(false);
+              if (e.by === "red" || e.by === "black") {
+                // Determine if this is the AI's move by checking snapshot context.
+                // We delay AI moves and play the appropriate sound after the pause.
+                setSnapshot((prev) => {
+                  const isAiMove = prev !== null && e.by === prev.aiColor;
+                  if (isAiMove) {
+                    setTimeout(() => {
+                      setSnapshot(e.snapshot);
+                      setAwaitingAi(false);
+                      if (e.move.captures.length > 0) playCaptureSound();
+                      else playMoveSound();
+                    }, AI_MOVE_DELAY_MS);
+                    return prev; // keep current snapshot until delay fires
+                  }
+                  // Player's own move: apply immediately (sound already played)
+                  return e.snapshot;
+                });
+              } else {
+                setSnapshot(e.snapshot);
+                setAwaitingAi(false);
+              }
               break;
             case "game_over":
               setSnapshot(e.snapshot);
@@ -142,13 +160,21 @@ function GameInner() {
 
   async function handleMove(move: Move) {
     if (!snapshot) return;
+
+    // Play player's sound immediately on click.
+    if (move.captures.length > 0) playCaptureSound();
+    else playMoveSound();
+
     setAwaitingAi(true);
     try {
       const res = await api.playMove(gameId, move, tokenGetter);
-      setSnapshot(res.snapshot);
+      // Apply with the same delay so the REST fallback matches the WS visual pace.
+      setTimeout(() => {
+        setSnapshot(res.snapshot);
+        setAwaitingAi(false);
+      }, AI_MOVE_DELAY_MS);
     } catch (err) {
       setError((err as Error).message);
-    } finally {
       setAwaitingAi(false);
     }
   }
@@ -170,22 +196,28 @@ function GameInner() {
     snapshot.status === "active" && snapshot.currentTurn === snapshot.playerColor;
   const finished = snapshot.status !== "active";
 
+  let bannerIcon: ReactNode = null;
   let banner: string;
   let bannerClass = "muted";
   if (finished) {
     if (snapshot.status === `won_${snapshot.playerColor}`) {
-      banner = "🏆 ¡Ganaste!";
+      banner = "¡Ganaste!";
       bannerClass = "success";
+      bannerIcon = <Trophy size={16} />;
     } else if (snapshot.status === `won_${snapshot.aiColor}`) {
-      banner = "💀 Ganó la IA";
+      banner = "Ganó la IA";
       bannerClass = "danger";
+      bannerIcon = <Skull size={16} />;
     } else {
-      banner = "🤝 Empate";
+      banner = "Empate";
+      bannerIcon = <Handshake size={16} />;
     }
   } else if (dealing) {
-    banner = "🎴 Repartiendo fichas…";
+    banner = "Repartiendo fichas…";
+    bannerIcon = <Dices size={16} />;
   } else if (awaitingAi) {
-    banner = "🤖 La IA está pensando…";
+    banner = "La IA está pensando…";
+    bannerIcon = <Bot size={16} />;
   } else if (isPlayerTurn) {
     banner = "Tu turno";
   } else {
@@ -196,7 +228,7 @@ function GameInner() {
     <div className="game-page">
       <div className="status-banner">
         <div>
-          <span className={`badge ${bannerClass}`}>{banner}</span>
+          <span className={`badge ${bannerClass}`}>{bannerIcon} {banner}</span>
           <span style={{ marginLeft: 12 }} className="muted">
             Movimiento {snapshot.moveCount} · {snapshot.difficulty} ·{" "}
             {snapshot.boardSize}×{snapshot.boardSize}
@@ -234,24 +266,33 @@ function GameInner() {
       <AnimatePresence>
         {finished && (
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="game-over-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ marginTop: 20, textAlign: "center" }}
+            transition={{ duration: 0.25 }}
           >
-            <h3 style={{ marginTop: 0 }}>{banner}</h3>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button className="btn" onClick={() => navigate({ to: "/play" })}>
-                Nueva partida
-              </button>
-              <button
-                className="btn ghost"
-                onClick={() => navigate({ to: "/ranking" })}
-              >
-                Ver ranking
-              </button>
-            </div>
+            <motion.div
+              className="game-over-modal"
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 340, damping: 26, delay: 0.05 }}
+            >
+              <div className={`game-over-icon ${bannerClass}`}>{bannerIcon}</div>
+              <h2 className="game-over-title">{banner}</h2>
+              <div className="game-over-actions">
+                <button className="btn" onClick={() => navigate({ to: "/play" })}>
+                  Nueva partida
+                </button>
+                <button
+                  className="btn ghost"
+                  onClick={() => navigate({ to: "/ranking" })}
+                >
+                  Ver ranking
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

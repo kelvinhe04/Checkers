@@ -38,50 +38,52 @@ body,
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     sans-serif;
   color: var(--text);
-  background: radial-gradient(at top left, #1e293b 0%, #0f172a 70%, #020617 100%);
+}
+
+/* Fondo unificado: TODO el sitio usa el mismo degradado verde mesa de billar.
+   Pintado en body con background-attachment: fixed para que no se mueva al
+   hacer scroll. */
+body {
+  background:
+    radial-gradient(
+      ellipse at top,
+      #1a3823 0%,
+      #0e1f15 55%,
+      #050a07 100%
+    );
+  background-attachment: fixed;
 }
 
 /* ============================================================
-   Scrollbar custom — track azul oscuro, thumb más clarito
+   Scrollbar custom — track verde oscuro, thumb madera en píldora.
+   NOTA: NO usar scrollbar-color ni scrollbar-width en html/body —
+   en Chrome 121+ cualquiera de esas propiedades estándar hace que
+   el navegador ignore todos los ::-webkit-scrollbar-* por completo.
    ============================================================ */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #64748b var(--bg);
-}
-
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg);
-  border-radius: 999px;
-  margin: 3px 0;
+  background: #0b1a10;
+  border-radius: 0;
 }
 ::-webkit-scrollbar-thumb {
-  background: #64748b;
+  background: var(--wood);
   border-radius: 999px;
-  border: 1.5px solid rgba(15, 23, 42, 0.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition: background 0.15s ease;
+  border: 2px solid #0b1a10;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--wood-light);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--wood-dark);
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-/* Scrollbar especial cuando estamos en una partida (verde mesa) */
-.game-page-active ::-webkit-scrollbar-track {
-  background: var(--felt-green-dark);
-}
-.game-page-active ::-webkit-scrollbar-thumb {
-  background:
-    linear-gradient(180deg, #d4a574 0%, var(--wood) 60%, var(--wood-dark) 100%);
-  border-color: var(--felt-green-dark);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: #0b1a10;
 }
 
 a {
@@ -89,7 +91,7 @@ a {
   text-decoration: none;
 }
 a:hover {
-  text-decoration: underline;
+  color: #e8d5b0;
 }
 
 .app-shell {
@@ -103,9 +105,9 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   padding: 14px 28px;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  background: #0d1d12;
+  border-bottom: 1px solid rgba(80, 140, 95, 0.25);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -126,10 +128,16 @@ a:hover {
 .nav-link {
   color: var(--text-muted);
   font-weight: 500;
+  text-decoration: none;
+  transition: color 150ms ease, text-shadow 150ms ease;
 }
-.nav-link.active,
+.nav-link.active {
+  color: #d6e9c8;
+  text-shadow: 0 0 12px rgba(120, 200, 100, 0.15);
+}
 .nav-link:hover {
-  color: var(--text);
+  color: #e8e0d0;
+  text-shadow: 0 0 8px rgba(200, 180, 140, 0.12);
 }
 .nav-right {
   display: flex;
@@ -146,11 +154,20 @@ a:hover {
 }
 
 .card {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  background:
+    linear-gradient(180deg, rgba(20, 40, 28, 0.85), rgba(10, 22, 15, 0.85));
+  border: 1px solid rgba(80, 140, 95, 0.22);
   border-radius: var(--radius);
   padding: 20px;
-  box-shadow: var(--shadow);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.5);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.card:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 16px 36px rgba(0, 0, 0, 0.55);
 }
 
 .btn {
@@ -164,10 +181,12 @@ a:hover {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 80ms ease, background 120ms ease;
+  transition: transform 150ms ease, background 150ms ease, box-shadow 150ms ease;
 }
 .btn:hover {
   background: var(--accent-strong);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px);
 }
 .btn:active {
   transform: scale(0.97);
@@ -177,13 +196,24 @@ a:hover {
   cursor: not-allowed;
 }
 .btn.secondary {
-  background: var(--bg-elev-2);
+  background: rgba(30, 50, 38, 0.8);
   color: var(--text);
+  border: 1px solid rgba(120, 170, 130, 0.2);
+}
+.btn.secondary:hover {
+  background: rgba(40, 65, 50, 0.9);
+  border-color: rgba(120, 170, 130, 0.4);
+  box-shadow: 0 0 16px rgba(120, 170, 130, 0.15);
 }
 .btn.ghost {
   background: transparent;
   color: var(--text);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.btn.ghost:hover {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: none;
 }
 
 .row {
@@ -226,6 +256,7 @@ table.table th {
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 2px 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -427,23 +458,23 @@ table.table th {
   position: relative;
   cursor: pointer;
 }
-.piece.king::after {
-  content: "♚";
-  position: absolute;
-  font-size: 60%;
-  color: var(--king-mark, #f1c40f);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+.piece.king {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(20, 40, 28, 0.7), rgba(10, 22, 15, 0.7));
+  border: 1px solid rgba(80, 140, 95, 0.25);
   border-radius: var(--radius);
   padding: 12px 18px;
   margin-bottom: 16px;
+  backdrop-filter: blur(4px);
 }
 
 .skins-grid {
@@ -487,7 +518,7 @@ table.table th {
 }
 
 /* ============================================================
-   PlayPage / Options screen (estilo image 4)
+   PlayPage / Options screen — estilo mesa de billar oscura
    ============================================================ */
 
 .play-wrap {
@@ -499,29 +530,30 @@ table.table th {
 
 .options-panel {
   background:
-    repeating-linear-gradient(
-      90deg,
-      #e8d4ad 0px,
-      #f0dfba 6px,
-      #e3cca2 14px,
-      #ecd6ae 22px
+    linear-gradient(
+      180deg,
+      rgba(22, 44, 30, 0.92) 0%,
+      rgba(12, 26, 16, 0.95) 50%,
+      rgba(8, 18, 10, 0.95) 100%
     );
-  border-radius: 22px;
+  border: 1px solid rgba(140, 110, 70, 0.35);
+  border-radius: 20px;
   padding: 32px 28px 28px;
-  color: #2a2a2a;
   box-shadow:
-    inset 0 0 40px rgba(0, 0, 0, 0.06),
-    0 20px 40px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 40px rgba(0, 0, 0, 0.5);
   position: relative;
 }
 
 .options-title {
   text-align: center;
-  margin: 0 0 22px;
-  font-size: 36px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  color: #1a1a1a;
+  margin: 0 0 24px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #d6e9c8;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
 }
 
 .options-section {
@@ -530,75 +562,80 @@ table.table th {
 }
 
 .options-label {
-  font-weight: 800;
-  font-size: 22px;
-  margin-bottom: 10px;
-  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 12px;
+  color: #a8c89a;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 .carousel {
   display: grid;
-  grid-template-columns: 56px 1fr 56px;
-  gap: 14px;
+  grid-template-columns: 48px 1fr 48px;
+  gap: 12px;
   align-items: center;
   justify-items: center;
 }
 
 .carousel-arrow {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
-  background: #4cc9c0;
-  color: white;
-  font-size: 22px;
-  font-weight: 800;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(160, 130, 80, 0.25);
+  background: rgba(20, 40, 28, 0.6);
+  color: #c8b088;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
-  transition: transform 80ms ease, background 120ms ease;
+  transition: all 180ms ease;
 }
 .carousel-arrow:hover {
-  background: #38b2a9;
+  background: rgba(180, 150, 100, 0.12);
+  border-color: rgba(180, 150, 100, 0.45);
+  color: #e8d5b0;
+  transform: scale(1.06);
+  box-shadow: 0 0 14px rgba(180, 150, 100, 0.15);
 }
 .carousel-arrow:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  transform: scale(0.94);
 }
 
 .carousel-value {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(10, 24, 16, 0.55);
+  border: 1px solid rgba(140, 110, 70, 0.2);
   border-radius: 14px;
   padding: 14px 20px;
-  min-width: 220px;
+  min-width: 200px;
   text-align: center;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(4px);
 }
 .carousel-text {
-  font-size: 24px;
-  font-weight: 800;
-  color: #2a2a2a;
+  font-size: 20px;
+  font-weight: 700;
+  color: #e8e0d0;
 }
 
 .stars {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 22px;
+  gap: 6px;
+  margin-top: 8px;
 }
 .star.on {
   color: #f5b301;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  filter: drop-shadow(0 0 4px rgba(245, 179, 1, 0.3));
 }
 .star.off {
-  color: #cdb98f;
+  color: #4a5a4a;
 }
 
 .color-value {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .color-dots {
   display: flex;
@@ -610,10 +647,10 @@ table.table th {
   height: 22px;
   border-radius: 50%;
   box-shadow:
-    inset 0 -3px 0 rgba(0, 0, 0, 0.25),
-    inset 0 2px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.12),
     0 2px 4px rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(0, 0, 0, 0.4);
 }
 .color-dot-lg {
   width: 30px;
@@ -624,57 +661,60 @@ table.table th {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  margin: 18px 0 20px;
+  margin: 20px 0 22px;
 }
 
 .toggle-block {
   text-align: center;
 }
 .toggle-label {
-  font-weight: 800;
-  font-size: 20px;
-  margin-bottom: 8px;
-  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: #a8c89a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid rgba(140, 110, 70, 0.2);
+  border-radius: 10px;
   padding: 0;
-  width: 130px;
-  height: 44px;
+  width: 120px;
+  height: 40px;
   cursor: pointer;
   position: relative;
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 14px;
   color: white;
   overflow: hidden;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+  transition: border-color 150ms ease;
 }
 .toggle.on {
-  background: #4cd2a7;
+  background: rgba(34, 150, 80, 0.4);
+  border-color: rgba(34, 150, 80, 0.4);
 }
 .toggle.off {
-  background: #e87878;
+  background: rgba(180, 60, 60, 0.3);
+  border-color: rgba(180, 60, 60, 0.3);
 }
 .toggle-knob {
   position: absolute;
-  top: 4px;
-  width: 36px;
-  height: 36px;
-  background: white;
+  top: 3px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
-  transition: left 120ms ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: left 180ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 .toggle.on .toggle-knob {
-  left: 4px;
+  left: 3px;
 }
 .toggle.off .toggle-knob {
-  left: calc(100% - 40px);
+  left: calc(100% - 35px);
 }
 .toggle-text {
   position: absolute;
@@ -683,68 +723,132 @@ table.table th {
   pointer-events: none;
 }
 .toggle.on .toggle-text {
-  padding-left: 36px;
+  padding-left: 32px;
 }
 .toggle.off .toggle-text {
-  padding-right: 36px;
+  padding-right: 32px;
 }
 
 .start-btn {
   display: block;
   margin: 6px auto 0;
-  background: #4cd2a7;
+  background:
+    linear-gradient(180deg, #3a8a5a 0%, #2a6a42 100%);
   color: white;
-  border: none;
-  font-size: 28px;
-  font-weight: 800;
-  padding: 14px 64px;
+  border: 1px solid rgba(180, 150, 100, 0.3);
+  font-size: 24px;
+  font-weight: 700;
+  padding: 14px 56px;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 6px 20px rgba(0, 0, 0, 0.35);
   letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 200ms ease;
 }
 .start-btn:hover {
-  background: #38b894;
+  background:
+    linear-gradient(180deg, #48a86e 0%, #347a4e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 24px rgba(60, 160, 90, 0.25),
+    0 6px 20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+.start-btn:active {
+  transform: translateY(0);
 }
 .start-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .active-games-card {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  background:
+    linear-gradient(180deg, rgba(20, 40, 28, 0.85), rgba(10, 22, 15, 0.85));
+  border: 1px solid rgba(80, 140, 95, 0.22);
   border-radius: var(--radius);
   padding: 18px 20px;
-  box-shadow: var(--shadow);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.5);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.active-games-card:hover {
+  border-color: rgba(80, 140, 95, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 16px 36px rgba(0, 0, 0, 0.55);
 }
 .active-games-card h3 {
   margin: 0 0 10px;
+  color: #d6e9c8;
+}
+.active-games-card li {
+  border-bottom-color: rgba(80, 140, 95, 0.18) !important;
 }
 
-/* Game page: el fondo verde tiene que llenar TODA la ventana, no solo el
-   max-width del .main. Usamos un ::before fijo a la viewport (debajo del nav). */
+/* Game page: el fondo verde lo aplica directamente body.game-page-active
+   (ver más arriba). El .game-page solo ajusta el banner para verse sobre
+   el verde. */
 .game-page {
   position: relative;
-  padding-top: 4px;
-}
-.game-page::before {
-  content: "";
-  position: fixed;
-  inset: 64px 0 0 0;
-  background:
-    radial-gradient(
-      ellipse at top,
-      #1a3823 0%,
-      #102418 55%,
-      #050a07 100%
-    );
-  z-index: -1;
-  pointer-events: none;
 }
 
 .game-page .status-banner {
-  background: rgba(15, 23, 42, 0.55);
-  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(10, 24, 16, 0.65);
+  border-color: rgba(120, 170, 130, 0.25);
   backdrop-filter: blur(6px);
+}
+
+/* ── Overlay de fin de partida ── */
+.game-over-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.game-over-modal {
+  background: #0f2318;
+  border: 1px solid rgba(107, 68, 35, 0.5);
+  border-radius: 18px;
+  padding: 44px 52px;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  min-width: 300px;
+}
+
+.game-over-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+.game-over-icon svg {
+  width: 52px;
+  height: 52px;
+}
+.game-over-icon.success svg { color: var(--success); }
+.game-over-icon.danger  svg { color: var(--danger); }
+.game-over-icon.muted   svg { color: var(--text-muted); }
+
+.game-over-title {
+  margin: 0 0 28px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.game-over-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }

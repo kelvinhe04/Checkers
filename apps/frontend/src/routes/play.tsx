@@ -6,6 +6,7 @@
 //   - Show Moves: ON/OFF
 // =========================================================================
 
+import { ChevronLeft, ChevronRight, Circle, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -133,7 +134,7 @@ export function PlayPage() {
                 onClick={() => shift(setDiffIdx, diffIdx, DIFFICULTY_OPTIONS.length, -1)}
                 aria-label="anterior dificultad"
               >
-                ◀
+                <ChevronLeft size={24} />
               </button>
               <div className="carousel-value">
                 <div className="carousel-text">{selectedDiff.label}</div>
@@ -144,7 +145,7 @@ export function PlayPage() {
                 onClick={() => shift(setDiffIdx, diffIdx, DIFFICULTY_OPTIONS.length, 1)}
                 aria-label="siguiente dificultad"
               >
-                ▶
+                <ChevronRight size={24} />
               </button>
             </div>
           </div>
@@ -160,7 +161,7 @@ export function PlayPage() {
                 }
                 aria-label="anterior first move"
               >
-                ◀
+                <ChevronLeft size={24} />
               </button>
               <div className="carousel-value">
                 <div className="carousel-text">{selectedFirstMove.label}</div>
@@ -172,7 +173,7 @@ export function PlayPage() {
                 }
                 aria-label="siguiente first move"
               >
-                ▶
+                <ChevronRight size={24} />
               </button>
             </div>
           </div>
@@ -188,7 +189,7 @@ export function PlayPage() {
                 }
                 aria-label="anterior color"
               >
-                ◀
+                <ChevronLeft size={24} />
               </button>
               <div className="carousel-value color-value">
                 {selectedColor.value === "random" ? (
@@ -217,7 +218,7 @@ export function PlayPage() {
                 }
                 aria-label="siguiente color"
               >
-                ▶
+                <ChevronRight size={24} />
               </button>
             </div>
           </div>
@@ -263,9 +264,12 @@ function Stars({ count }: { count: 1 | 2 | 3 }) {
   return (
     <div className="stars">
       {[1, 2, 3].map((n) => (
-        <span key={n} className={`star ${n <= count ? "on" : "off"}`}>
-          ★
-        </span>
+        <Star
+          key={n}
+          size={22}
+          className={`star ${n <= count ? "on" : "off"}`}
+          fill={n <= count ? "#f5b301" : "none"}
+        />
       ))}
     </div>
   );
@@ -332,7 +336,11 @@ function ActiveGames({
             <div>
               <div style={{ fontWeight: 600 }}>
                 {g.difficulty} · {g.boardSize}×{g.boardSize} ·{" "}
-                {g.playerColor === "red" ? "🔴" : "⚫"}
+                <Circle
+                  size={14}
+                  fill={g.playerColor === "red" ? "#dc2626" : "#111"}
+                  color={g.playerColor === "red" ? "#dc2626" : "#111"}
+                />
               </div>
               <div className="muted" style={{ fontSize: 13 }}>
                 movimiento {g.moveCount} · turno{" "}

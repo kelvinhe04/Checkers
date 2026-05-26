@@ -9,6 +9,7 @@
 // dibuja y resalta jugadas legales devueltas por el shared engine.
 // =========================================================================
 
+import { Crown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -293,10 +294,11 @@ function PieceDot({ square, skin }: { square: Square; skin: SkinDef }) {
         {
           background: `radial-gradient(circle at 30% 30%, ${lighten(fill)} 0%, ${fill} 65%)`,
           border: `3px solid ${stroke}`,
-          "--king-mark": skin.palette.kingMark,
         } as React.CSSProperties
       }
-    />
+    >
+      {king && <Crown size="40%" color={skin.palette.kingMark} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} />}
+    </motion.div>
   );
 }
 

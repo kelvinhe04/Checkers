@@ -1,3 +1,4 @@
+import { Crosshair, Sparkles, Trophy } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
@@ -24,7 +25,7 @@ export function HomePage() {
           whileHover={{ y: -4 }}
           transition={{ duration: 0.2 }}
         >
-          <h3 style={{ marginTop: 0 }}>🎯 Empieza a jugar</h3>
+          <h3 style={{ marginTop: 0 }}><Crosshair size={20} style={{ verticalAlign: "middle", marginRight: 6 }} /> Empieza a jugar</h3>
           <p className="muted">
             Elige dificultad y arrasamos contra la IA. Capturas obligatorias,
             coronación, y multi-saltos.
@@ -46,7 +47,7 @@ export function HomePage() {
           whileHover={{ y: -4 }}
           transition={{ duration: 0.2 }}
         >
-          <h3 style={{ marginTop: 0 }}>🏆 Ranking global</h3>
+          <h3 style={{ marginTop: 0 }}><Trophy size={20} style={{ verticalAlign: "middle", marginRight: 6 }} /> Ranking global</h3>
           <p className="muted">
             Compite por victorias y rapidez. El ranking ordena por wins, win
             rate y menor cantidad de movimientos por victoria.
@@ -61,7 +62,7 @@ export function HomePage() {
           whileHover={{ y: -4 }}
           transition={{ duration: 0.2 }}
         >
-          <h3 style={{ marginTop: 0 }}>✨ Premium</h3>
+          <h3 style={{ marginTop: 0 }}><Sparkles size={20} style={{ verticalAlign: "middle", marginRight: 6 }} /> Premium</h3>
           <p className="muted">
             Desbloquea skins de fichas (Océano, Neón, Oro). Pago con Stripe,
             cancela cuando quieras.

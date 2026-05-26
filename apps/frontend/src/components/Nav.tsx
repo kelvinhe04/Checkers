@@ -1,3 +1,4 @@
+import { Crown } from "lucide-react";
 import {
   SignedIn,
   SignedOut,
@@ -23,7 +24,7 @@ export function Nav() {
   return (
     <nav className="nav">
       <div className="nav-brand">
-        <span>♛</span>
+        <Crown size={22} />
         <span>Checkers</span>
         {premium ? <span className="badge">Premium</span> : null}
       </div>

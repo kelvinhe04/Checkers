@@ -2,6 +2,7 @@
 // Página premium: skins + checkout/portal de Stripe.
 // =========================================================================
 
+import { Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   SignedIn,
@@ -172,7 +173,7 @@ function PremiumInner() {
                   </div>
                   {s.premium ? (
                     <span className={`badge ${locked ? "muted" : ""}`}>
-                      {locked ? "🔒 Premium" : "Premium"}
+                      {locked ? <><Lock size={14} /> Premium</> : "Premium"}
                     </span>
                   ) : (
                     <span className="badge muted">Free</span>
