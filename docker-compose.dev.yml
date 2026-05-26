@@ -1,0 +1,86 @@
+# =========================================================================
+# Compose de desarrollo: backend, ai-service y mongo en contenedores,
+# pero el FRONTEND lo corres fuera con `pnpm --filter frontend dev` para
+# disfrutar hot reload nativo de Vite/TanStack Start.
+#
+# Levantar:
+#   docker compose -f docker-compose.dev.yml up --build
+# En otra terminal:
+#   pnpm install
+#   pnpm --filter frontend dev
+# =========================================================================
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-checkers}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-checkers}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-checkers}
+    volumes:
+      - mongo_data_dev:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: apps/ai-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      AI_PORT: ${AI_PORT:-4100}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-please-change-me}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      SERVICE_ENV: development
+    ports:
+      # En dev sí lo exponemos para poder hacer curl directo a la IA.
+      - "${AI_PORT:-4100}:4100"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4100/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    environment:
+      BACKEND_PORT: ${BACKEND_PORT:-4000}
+      MONGO_URL: ${MONGO_URL:-mongodb://checkers:checkers@mongo:27017/checkers?authSource=admin}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:4100}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-please-change-me}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-}
+      CLERK_JWT_TEMPLATE: ${CLERK_JWT_TEMPLATE:-checkers-backend}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_PREMIUM: ${STRIPE_PRICE_PREMIUM:-}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost:3000/premium?status=success}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost:3000/premium?status=cancel}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      SERVICE_ENV: development
+      # CORS abierto al puerto del frontend local
+      FRONTEND_ORIGIN: ${PUBLIC_FRONTEND_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mongo_data_dev:

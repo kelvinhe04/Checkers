@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+build/
+.output/
+.vinxi/
+.tanstack/
+.nitro/
+.cache/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# misc
+.DS_Store
+.idea/
+.vscode/
+*.tsbuildinfo
+
+# docker
+.docker/
+
+# coverage
+coverage/
