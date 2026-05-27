@@ -46,9 +46,23 @@ function PremiumInner() {
   });
   const premium = profile?.premiumActive ?? false;
 
-  const [skinId, setSkinId] = useState<string>(readSkinId());
+  const [skinId, setSkinId] = useState<string>(() => {
+    const stored = readSkinId();
+    const s = SKINS.find((x) => x.id === stored);
+    if (s?.premium && !premium) return "classic";
+    return stored;
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Si el usuario perdió premium (cerró sesión, expiró), resetea el skin.
+  useEffect(() => {
+    setSkinId((prev) => {
+      const s = SKINS.find((x) => x.id === prev);
+      if (s?.premium && !premium) return "classic";
+      return prev;
+    });
+  }, [premium]);
 
   // Si volvemos del checkout con success, sincronizamos con Stripe y refrescamos.
   useEffect(() => {
@@ -165,9 +179,9 @@ function PremiumInner() {
                 <motion.div
                   key={s.id}
                   whileHover={{ scale: locked ? 1 : 1.02 }}
-                  className={`skin-tile ${skinId === s.id ? "active" : ""} ${
-                    locked ? "locked" : ""
-                  }`}
+                  className={`skin-tile ${
+                    skinId === s.id && !locked ? "active" : ""
+                  } ${locked ? "locked" : ""}`}
                   onClick={() => chooseSkin(s.id, locked)}
                 >
                   <div style={{ fontWeight: 600 }}>{s.name}</div>
