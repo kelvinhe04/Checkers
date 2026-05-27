@@ -16,6 +16,10 @@ export interface SkinDef {
   id: string;
   name: string;
   premium: boolean;
+  /** Nombre visual del bando "red" en esta skin (ej. "Azul" en Océano). */
+  redLabel: string;
+  /** Nombre visual del bando "black" en esta skin (ej. "Marino" en Océano). */
+  blackLabel: string;
   palette: SkinPalette;
 }
 
@@ -24,6 +28,8 @@ export const SKINS: readonly SkinDef[] = [
     id: "classic",
     name: "Clásico",
     premium: false,
+    redLabel: "Rojo",
+    blackLabel: "Negro",
     palette: {
       red: "#dc2626",
       redKing: "#dc2626",
@@ -38,6 +44,8 @@ export const SKINS: readonly SkinDef[] = [
     id: "ocean",
     name: "Océano",
     premium: true,
+    redLabel: "Azul",
+    blackLabel: "Marino",
     palette: {
       red: "#0ea5e9",
       redKing: "#0284c7",
@@ -52,6 +60,8 @@ export const SKINS: readonly SkinDef[] = [
     id: "neon",
     name: "Neón",
     premium: true,
+    redLabel: "Rosa",
+    blackLabel: "Cian",
     palette: {
       red: "#f43f5e",
       redKing: "#fb7185",
@@ -66,6 +76,8 @@ export const SKINS: readonly SkinDef[] = [
     id: "gold",
     name: "Oro",
     premium: true,
+    redLabel: "Dorado",
+    blackLabel: "Oscuro",
     palette: {
       red: "#facc15",
       redKing: "#fde047",

@@ -53,14 +53,33 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
 
     // Resolvemos perfil; preferimos lo que ya está en payload pero hacemos
     // upsert en Mongo para mantener una copia local.
-    const email =
-      (payload["email"] as string | undefined) ??
-      (payload["primary_email_address"] as string | undefined) ??
+    const rawEmail =
+      (payload["email"] as string | undefined) ||
+      (payload["primary_email_address"] as string | undefined) ||
       "";
+
+    // Filtramos variables de template de Clerk sin resolver
+    // (p.ej. "{{user.primary_email_address.email_address}}").
+    let email = isValidEmail(rawEmail) ? rawEmail : "";
+
+    // Si el JWT template no expone el email (o tiene una variable sin resolver),
+    // lo buscamos directamente en la API de Clerk.
+    if (!email && clerk) {
+      try {
+        const clerkUser = await clerk.users.getUser(clerkId);
+        email =
+          clerkUser.emailAddresses.find(
+            (e) => e.id === clerkUser.primaryEmailAddressId,
+          )?.emailAddress ?? "";
+      } catch {
+        // No bloqueamos el flujo si falla; el email quedará vacío.
+      }
+    }
+
     const name =
-      (payload["name"] as string | undefined) ??
-      (payload["fullName"] as string | undefined) ??
-      email.split("@")[0] ??
+      (payload["name"] as string | undefined) ||
+      (payload["fullName"] as string | undefined) ||
+      email.split("@")[0] ||
       "Player";
 
     const auth: AuthUser = { clerkId, email, name };
@@ -103,4 +122,14 @@ export async function upsertUser(u: AuthUser): Promise<UserDoc> {
   const doc = await users.findOne({ clerkId: u.clerkId });
   if (!doc) throw new Error("user upsert failed");
   return doc;
+}
+
+/**
+ * Valida que un string sea un email real.
+ * Descarta variables de template de Clerk sin resolver (contienen "{{").
+ */
+function isValidEmail(value: string): boolean {
+  if (!value) return false;
+  if (value.includes("{{")) return false;      // template sin resolver
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }

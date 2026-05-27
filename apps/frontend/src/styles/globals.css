@@ -90,6 +90,123 @@ a {
   color: var(--accent);
   text-decoration: none;
 }
+
+/* ============================================================
+   Clerk modal — overrides que la appearance API no alcanza
+   ============================================================ */
+
+/* ── "Last used": píldora de Clerk ── */
+.cl-socialButtonsBlockButtonBadge,
+[data-localization-key*="badge"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  padding: 2px 8px !important;
+  transform: translateY(12px) !important;
+  font-size: 0.7rem !important;
+  border-radius: 999px !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+}
+.cl-badge,
+[class*="cl-badge"],
+[class*="cl-internal"][class*="badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ── Íconos de proveedor OAuth ── */
+[class*="cl-socialButtonsBlockButton"] img,
+[class*="cl-providerIcon"] img {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+/* ── Botón CONTINUE: quitar borde ámbar que aplica colorPrimary ── */
+.cl-formButtonPrimary {
+  border: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  transition:
+    background 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: background, box-shadow, transform;
+}
+.cl-formButtonPrimary:focus,
+.cl-formButtonPrimary:focus-visible {
+  outline: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 3px rgba(58, 138, 90, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.35) !important;
+}
+.cl-formButtonPrimary:hover {
+  background: linear-gradient(180deg, #48a86e 0%, #347a4e 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 22px rgba(58, 160, 90, 0.22),
+    0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Hover en botones OAuth (Google, Microsoft) ── */
+/* transition en el estado BASE para que anime tanto la entrada como la salida */
+.cl-socialButtonsBlockButton {
+  transition:
+    background 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: background, border-color, box-shadow, transform;
+}
+.cl-socialButtonsBlockButton:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(50, 92, 62, 0.98) 0%,
+    rgba(32, 64, 42, 0.98) 100%
+  ) !important;
+  border-color: rgba(160, 130, 80, 0.7) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.32) !important;
+  transform: translateY(-2px);
+}
+.cl-socialButtonsBlockButton:active {
+  transform: translateY(0) scale(0.97) !important;
+  transition-duration: 80ms !important;
+}
+
+/* ── Input focus ── */
+.cl-formFieldInput:focus,
+.cl-formFieldInput:focus-within {
+  border-color: rgba(58, 138, 90, 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(58, 138, 90, 0.2) !important;
+  outline: none !important;
+}
+
+/* ── Quitar línea de abajo del modal (footerAction + footer) ── */
+.cl-footer,
+.cl-footerPages,
+.cl-footerPagesLink {
+  display: none !important;
+}
+.cl-footerAction {
+  border-top: none !important;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* ── Padding horizontal del card + quitar borde inferior ── */
+.cl-card {
+  padding: 28px 28px 24px !important;
+  border-bottom: none !important;   /* quita la línea de abajo del modal */
+  border-radius: 20px !important;
+}
+
 a:hover {
   color: #e8d5b0;
 }
@@ -635,23 +752,31 @@ table.table th {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  /* Altura fija igual a: dot(30) + gap(6) + texto(aprox 28) + padding vertical(28) */
+  min-height: 92px;
 }
 .color-dots {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
 }
+/* Tamaño único para todos los dots de color — igual en modo simple y aleatorio. */
 .color-dot {
   display: inline-block;
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
+  flex-shrink: 0;
   box-shadow:
     inset 0 -3px 0 rgba(0, 0, 0, 0.35),
     inset 0 2px 0 rgba(255, 255, 255, 0.12),
     0 2px 4px rgba(0, 0, 0, 0.3);
   border: 2px solid rgba(0, 0, 0, 0.4);
 }
+/* Alias mantenido por compatibilidad — ya no cambia tamaño. */
 .color-dot-lg {
   width: 30px;
   height: 30px;

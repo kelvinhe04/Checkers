@@ -6,7 +6,7 @@
 //   - Show Moves: ON/OFF
 // =========================================================================
 
-import { ChevronLeft, ChevronRight, Circle, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ import type {
 type ColorChoice = PieceColor | "random";
 import { api } from "../lib/api.js";
 import { env } from "../lib/env.js";
+import { getSkin, readSkinId } from "../lib/skins.js";
 
 interface DifficultyOption {
   label: string;
@@ -73,9 +74,32 @@ export function PlayPage() {
 
   const selectedDiff = DIFFICULTY_OPTIONS[diffIdx]!;
   const selectedFirstMove = FIRST_MOVE_OPTIONS[firstMoveIdx]!;
-  const selectedColor = COLOR_OPTIONS[colorIdx]!;
 
   const tokenGetter = () => auth.getToken({ template: env.clerkJwtTemplate });
+
+  // Leer premium desde el backend para aplicar la skin correcta.
+  const { data: profile } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.getProfile(tokenGetter),
+    enabled: auth.isSignedIn ?? false,
+  });
+  const premium = profile?.premiumActive ?? false;
+  const skin = useMemo(() => {
+    const s = getSkin(readSkinId());
+    if (s.premium && !premium) return getSkin("classic");
+    return s;
+  }, [premium]);
+
+  // Opciones de color usando la paleta y nombres de la skin activa.
+  const colorOptions = useMemo(
+    () => [
+      { value: "red" as ColorChoice, label: skin.redLabel, dot: skin.palette.red },
+      { value: "black" as ColorChoice, label: skin.blackLabel, dot: skin.palette.black },
+      { value: "random" as ColorChoice, label: "Aleatorio", dot: null },
+    ],
+    [skin],
+  );
+  const selectedColor = colorOptions[colorIdx]!;
 
   const activeGamesQuery = useQuery({
     queryKey: ["games", "active"],
@@ -185,7 +209,7 @@ export function PlayPage() {
               <button
                 className="carousel-arrow"
                 onClick={() =>
-                  shift(setColorIdx, colorIdx, COLOR_OPTIONS.length, -1)
+                  shift(setColorIdx, colorIdx, colorOptions.length, -1)
                 }
                 aria-label="anterior color"
               >
@@ -196,17 +220,17 @@ export function PlayPage() {
                   <div className="color-dots">
                     <span
                       className="color-dot"
-                      style={{ background: "#dc2626" }}
+                      style={{ background: skin.palette.red }}
                     />
                     <span
                       className="color-dot"
-                      style={{ background: "#111111" }}
+                      style={{ background: skin.palette.black }}
                     />
                   </div>
                 ) : (
                   <span
                     className="color-dot color-dot-lg"
-                    style={{ background: selectedColor.dot }}
+                    style={{ background: selectedColor.dot ?? skin.palette.red }}
                   />
                 )}
                 <div className="carousel-text">{selectedColor.label}</div>
@@ -214,7 +238,7 @@ export function PlayPage() {
               <button
                 className="carousel-arrow"
                 onClick={() =>
-                  shift(setColorIdx, colorIdx, COLOR_OPTIONS.length, 1)
+                  shift(setColorIdx, colorIdx, colorOptions.length, 1)
                 }
                 aria-label="siguiente color"
               >
@@ -253,6 +277,7 @@ export function PlayPage() {
         <ActiveGames
           loading={activeGamesQuery.isLoading}
           games={activeGamesQuery.data?.games ?? []}
+          skin={skin}
           onResume={(id) => navigate({ to: "/game/$gameId", params: { gameId: id } })}
         />
       </SignedIn>
@@ -303,10 +328,12 @@ function Toggle({
 function ActiveGames({
   loading,
   games,
+  skin,
   onResume,
 }: {
   loading: boolean;
   games: GameSnapshot[];
+  skin: ReturnType<typeof getSkin>;
   onResume: (id: string) => void;
 }) {
   const items = useMemo(() => games.slice(0, 6), [games]);
@@ -334,12 +361,17 @@ function ActiveGames({
             }}
           >
             <div>
-              <div style={{ fontWeight: 600 }}>
-                {g.difficulty} · {g.boardSize}×{g.boardSize} ·{" "}
-                <Circle
-                  size={14}
-                  fill={g.playerColor === "red" ? "#dc2626" : "#111"}
-                  color={g.playerColor === "red" ? "#dc2626" : "#111"}
+              <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                {g.difficulty} · {g.boardSize}×{g.boardSize} ·
+                <span
+                  className="color-dot"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    background: g.playerColor === "red" ? skin.palette.red : skin.palette.black,
+                    border: `2px solid ${g.playerColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
+                    flexShrink: 0,
+                  }}
                 />
               </div>
               <div className="muted" style={{ fontSize: 13 }}>

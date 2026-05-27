@@ -7,6 +7,7 @@ import {
   useUser,
 } from "@clerk/clerk-react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { clerkAppearance } from "../lib/clerkTheme.js";
 
 const LINKS = [
   { to: "/", label: "Inicio" },
@@ -46,7 +47,7 @@ export function Nav() {
           </SignInButton>
         </SignedOut>
         <SignedIn>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton afterSignOutUrl="/" appearance={clerkAppearance} />
         </SignedIn>
       </div>
     </nav>

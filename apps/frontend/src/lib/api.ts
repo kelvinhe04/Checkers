@@ -141,6 +141,14 @@ export const api = {
     );
   },
 
+  syncPremium(getToken: GetToken) {
+    return request<{ premiumActive: boolean }>(
+      "/api/billing/sync",
+      { method: "POST" },
+      getToken,
+    );
+  },
+
   openPortal(getToken: GetToken) {
     return request<{ url: string }>(
       "/api/billing/portal",

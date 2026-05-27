@@ -57,6 +57,9 @@ export function Board({
   dealing,
 }: Props) {
   const size = boardSize(board);
+  // Cuando el jugador es "black" se voltea el tablero para que sus fichas
+  // estén siempre en la parte de abajo, como es convención en damas.
+  const flipped = playerColor === "black";
   const [selected, setSelected] = useState<Position | null>(null);
   const [dealtCount, setDealtCount] = useState(0);
 
@@ -159,9 +162,13 @@ export function Board({
   const destinations = new Map<string, Move>();
   for (const m of movesFromSelected) destinations.set(key(m.to), m);
 
-  const letters = LETTERS.slice(0, size).split("");
-  // Números de fila como en image 1: 8 arriba, 1 abajo (cuando size=8).
-  const nums = Array.from({ length: size }, (_, i) => size - i);
+  // Letras y números de coordenadas, invertidos si el tablero está volteado.
+  const letters = flipped
+    ? LETTERS.slice(0, size).split("").reverse()
+    : LETTERS.slice(0, size).split("");
+  const nums = flipped
+    ? Array.from({ length: size }, (_, i) => i + 1)
+    : Array.from({ length: size }, (_, i) => size - i);
 
   return (
     <div className="table-wrap">
@@ -198,8 +205,11 @@ export function Board({
                 } as React.CSSProperties
               }
             >
-              {Array.from({ length: size }).map((_, row) =>
-                Array.from({ length: size }).map((__, col) => {
+              {Array.from({ length: size }).map((_, rowIdx) =>
+                Array.from({ length: size }).map((__, colIdx) => {
+                  // Si el tablero está volteado, invertimos filas y columnas.
+                  const row = flipped ? size - 1 - rowIdx : rowIdx;
+                  const col = flipped ? size - 1 - colIdx : colIdx;
                   const dark = isDarkSquare(row, col);
                   const piece = (board[row]?.[col] ?? ".") as Square;
                   const isSelected =
@@ -220,14 +230,14 @@ export function Board({
 
                   return (
                     <div
-                      key={`${row}-${col}`}
+                      key={`${rowIdx}-${colIdx}`}
                       className={classNames.join(" ")}
                       onClick={() => clickSquare(row, col)}
                     >
                       <AnimatePresence>
                         {showPiece && (
                           <PieceDot
-                            key={`p-${row}-${col}-${piece}`}
+                            key={`p-${rowIdx}-${colIdx}-${piece}`}
                             square={piece}
                             skin={skin}
                           />

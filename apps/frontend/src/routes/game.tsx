@@ -9,9 +9,9 @@ import {
   SignedOut,
   SignInButton,
   useAuth,
-  useUser,
 } from "@clerk/clerk-react";
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   type GameSnapshot,
@@ -49,7 +49,6 @@ const AI_MOVE_DELAY_MS = 550;
 function GameInner() {
   const { gameId } = useParams({ from: "/game/$gameId" });
   const auth = useAuth();
-  const { user } = useUser();
   const navigate = useNavigate();
   const tokenGetter = () => auth.getToken({ template: env.clerkJwtTemplate });
 
@@ -62,8 +61,14 @@ function GameInner() {
   /** Si entramos por primera vez en moveCount=0, ejecutamos la animación de reparto una sola vez. */
   const [dealing, setDealing] = useState(false);
 
-  const premium =
-    (user?.publicMetadata?.premium as boolean | undefined) ?? false;
+  // Leer premium desde el perfil del backend (no de Clerk publicMetadata,
+  // que no se actualiza automáticamente al comprar).
+  const { data: profile } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.getProfile(tokenGetter),
+  });
+  const premium = profile?.premiumActive ?? false;
+
   const skin = useMemo(() => {
     const s = getSkin(readSkinId());
     if (s.premium && !premium) return getSkin("classic");
@@ -234,21 +239,7 @@ function GameInner() {
             {snapshot.boardSize}×{snapshot.boardSize}
           </span>
         </div>
-        <div className="muted" style={{ fontSize: 13 }}>
-          WS:{" "}
-          <span
-            style={{
-              color:
-                wsStatus === "open"
-                  ? "var(--success)"
-                  : wsStatus === "connecting"
-                    ? "var(--accent)"
-                    : "var(--danger)",
-            }}
-          >
-            {wsStatus}
-          </span>
-        </div>
+
       </div>
 
       <Board

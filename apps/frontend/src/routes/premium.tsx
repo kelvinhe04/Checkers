@@ -50,13 +50,29 @@ function PremiumInner() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Si volvemos del checkout con success, refrescamos el perfil.
+  // Si volvemos del checkout con success, sincronizamos con Stripe y refrescamos.
   useEffect(() => {
-    if (search?.status === "success") {
-      const t = setTimeout(() => refetch(), 1500);
-      return () => clearTimeout(t);
+    if (search?.status !== "success") return;
+
+    let cancelled = false;
+
+    async function syncAndRefetch() {
+      try {
+        await api.syncPremium(tokenGetter);
+      } catch {
+        // Si sync falla, igual intentamos refetch (el webhook puede haber llegado).
+      }
+      if (!cancelled) refetch();
     }
-  }, [search?.status, refetch]);
+
+    // Pequeño delay para dar tiempo a Stripe de procesar en caso de que el
+    // webhook sí llegue (producción). En desarrollo sync lo resuelve igual.
+    const t = setTimeout(syncAndRefetch, 1200);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [search?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function startCheckout() {
     setBusy(true);
@@ -97,7 +113,7 @@ function PremiumInner() {
         Desbloquea skins de fichas. Una sola suscripción, cancela cuando quieras.
       </p>
 
-      {search?.status === "success" && (
+      {search?.status === "success" && !premium && (
         <div className="card" style={{ marginBottom: 16 }}>
           <span className="badge success">Pago confirmado</span>{" "}
           Estamos sincronizando tu estado premium con Stripe…

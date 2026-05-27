@@ -8,6 +8,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { router } from "./router.js";
+import { clerkAppearance } from "./lib/clerkTheme.js";
 import { env } from "./lib/env.js";
 import "./styles/globals.css";
 
@@ -33,7 +34,7 @@ if (!env.clerkPublishableKey) {
 } else {
   ReactDOM.createRoot(rootEl).render(
     <React.StrictMode>
-      <ClerkProvider publishableKey={env.clerkPublishableKey}>
+      <ClerkProvider publishableKey={env.clerkPublishableKey} appearance={clerkAppearance}>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
         </QueryClientProvider>

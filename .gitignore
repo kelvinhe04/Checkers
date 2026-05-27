@@ -28,6 +28,9 @@ pnpm-debug.log*
 .vscode/
 *.tsbuildinfo
 
+# playwright / MCP browser automation artifacts
+.playwright-mcp/
+
 # docker
 .docker/
 
