@@ -11,9 +11,9 @@ export function HomePage() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="title">Damas con IA, ranking y partidas reanudables</h1>
+        <h1 className="title">Damas con computadora, ranking y partidas reanudables</h1>
         <p className="subtitle">
-          Juega contra una IA con tres niveles de dificultad. Tus partidas se
+          Juega contra la computadora con tres niveles de dificultad. Tus partidas se
           guardan en el servidor: puedes cerrar el navegador y continuar en
           otro dispositivo.
         </p>
@@ -27,7 +27,7 @@ export function HomePage() {
         >
           <h3 style={{ marginTop: 0 }}><Crosshair size={20} style={{ verticalAlign: "middle", marginRight: 6 }} /> Empieza a jugar</h3>
           <p className="muted">
-            Elige dificultad y arrasamos contra la IA. Capturas obligatorias,
+            Elige dificultad y juega contra la computadora. Capturas obligatorias,
             coronación, y multi-saltos.
           </p>
           <SignedIn>

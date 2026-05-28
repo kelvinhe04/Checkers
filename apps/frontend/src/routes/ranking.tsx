@@ -12,7 +12,7 @@ export function RankingPage() {
     <div>
       <h1 className="title">Ranking</h1>
       <p className="subtitle">
-        Ordenado por victorias, win rate y menor cantidad de movimientos por victoria.
+        Ordenado por victorias, rendimiento y menor cantidad de movimientos por victoria.
       </p>
 
       <div className="card">
@@ -32,7 +32,7 @@ export function RankingPage() {
                 <th>Victorias</th>
                 <th>Derrotas</th>
                 <th>Empates</th>
-                <th>Win rate</th>
+                <th>Rendimiento</th>
                 <th>Movs / victoria</th>
               </tr>
             </thead>

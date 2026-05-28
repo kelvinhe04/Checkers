@@ -2,7 +2,7 @@
 // Vista de una partida en curso. Tablero + estado + WS sync.
 // =========================================================================
 
-import { Bot, Dices, Handshake, Skull, Trophy } from "lucide-react";
+import { Bot, Dices, Handshake, Move as MoveIcon, Shuffle, Skull, Trophy } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   SignedIn,
@@ -17,6 +17,7 @@ import {
   type GameSnapshot,
   type Move,
   type WsServerEvent,
+  countPieces,
 } from "@checkers/shared";
 import { Board } from "../components/Board.js";
 import { api } from "../lib/api.js";
@@ -43,7 +44,7 @@ export function GamePage() {
   );
 }
 
-/** Pausa antes de mostrar el movimiento de la IA para que se perciba natural. */
+/** Pausa antes de mostrar el movimiento de la computadora para que se perciba natural. */
 const AI_MOVE_DELAY_MS = 550;
 
 function GameInner() {
@@ -210,7 +211,7 @@ function GameInner() {
       bannerClass = "success";
       bannerIcon = <Trophy size={16} />;
     } else if (snapshot.status === `won_${snapshot.aiColor}`) {
-      banner = "Ganó la IA";
+      banner = "Ganó la computadora";
       bannerClass = "danger";
       bannerIcon = <Skull size={16} />;
     } else {
@@ -221,25 +222,80 @@ function GameInner() {
     banner = "Repartiendo fichas…";
     bannerIcon = <Dices size={16} />;
   } else if (awaitingAi) {
-    banner = "La IA está pensando…";
+    banner = "La computadora está pensando…";
     bannerIcon = <Bot size={16} />;
   } else if (isPlayerTurn) {
     banner = "Tu turno";
   } else {
-    banner = "Turno de la IA";
+    banner = "Turno de la computadora";
   }
 
   return (
     <div className="game-page">
       <div className="status-banner">
-        <div>
-          <span className={`badge ${bannerClass}`}>{bannerIcon} {banner}</span>
-          <span style={{ marginLeft: 12 }} className="muted">
-            Movimiento {snapshot.moveCount} · {snapshot.difficulty} ·{" "}
-            {snapshot.boardSize}×{snapshot.boardSize}
+        <div className="status-left">
+          <span className={`badge ${bannerClass}`}>
+            {bannerIcon}
+            <span className="badge-text">{banner}</span>
           </span>
+          <div className="status-vs">
+            <span className="vs-player">Tú</span>
+            <span className="vs-label">vs</span>
+            <span className="vs-ai">computadora</span>
+          </div>
         </div>
 
+        <div className="status-right">
+          <div className="stat-chip" title="Movimientos realizados">
+            <MoveIcon size={12} />
+            <span>{snapshot.moveCount}</span>
+          </div>
+          {(() => {
+            const pc = countPieces(snapshot.board);
+            const playerTotal = snapshot.playerColor === "red"
+              ? pc.redPawns + pc.redKings
+              : pc.blackPawns + pc.blackKings;
+            const aiTotal = snapshot.aiColor === "red"
+              ? pc.redPawns + pc.redKings
+              : pc.blackPawns + pc.blackKings;
+            const playerColor = snapshot.playerColor === "red" ? skin.palette.red : skin.palette.black;
+            const aiColor = snapshot.aiColor === "red" ? skin.palette.red : skin.palette.black;
+            return (
+              <>
+                <div className="stat-chip" title="Tus fichas restantes">
+                  <span style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: playerColor,
+                    border: `1.5px solid ${snapshot.playerColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
+                    display: "inline-block",
+                  }} />
+                  <span>{playerTotal}</span>
+                </div>
+                <div className="stat-chip" title="Fichas restantes de la computadora">
+                  <span style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: aiColor,
+                    border: `1.5px solid ${snapshot.aiColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
+                    display: "inline-block",
+                  }} />
+                  <span>{aiTotal}</span>
+                </div>
+              </>
+            );
+          })()}
+          <div className="stat-chip" title="Dificultad">
+            <Bot size={12} />
+            <span className="stat-capitalize">{snapshot.difficulty}</span>
+          </div>
+          <div className="stat-chip" title="Tamaño del tablero">
+            <Shuffle size={12} />
+            <span>{snapshot.boardSize}×{snapshot.boardSize}</span>
+          </div>
+        </div>
       </div>
 
       <Board

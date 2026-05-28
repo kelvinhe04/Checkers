@@ -7,7 +7,7 @@ FROM oven/bun:1.1-alpine AS deps
 WORKDIR /repo
 
 # Bun no incluye pnpm. Lo activamos vía corepack (sin pasar por npm).
-RUN apk add --no-cache wget nodejs && corepack enable && corepack prepare pnpm@9.12.0 --activate
+RUN apk add --no-cache wget nodejs && bun install -g pnpm@9.12.0
 
 COPY package.json pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/shared/package.json packages/shared/

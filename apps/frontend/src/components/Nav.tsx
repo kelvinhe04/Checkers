@@ -1,14 +1,19 @@
-import { Crown, LogOut } from "lucide-react";
+import { Crown } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   SignedIn,
   SignedOut,
   SignInButton,
+  useAuth,
   useClerk,
   useUser,
 } from "@clerk/clerk-react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { api } from "../lib/api.js";
+import { env } from "../lib/env.js";
 import { ConfirmModal } from "./ConfirmModal.js";
+import { ProfileModal } from "./ProfileModal.js";
 
 const LINKS = [
   { to: "/", label: "Inicio" },
@@ -22,7 +27,14 @@ export function Nav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useUser();
   const { signOut } = useClerk();
-  const premium = (user?.publicMetadata?.premium as boolean | undefined) ?? false;
+  const auth = useAuth();
+  const tokenGetter = () => auth.getToken({ template: env.clerkJwtTemplate });
+  const { data: profile } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.getProfile(tokenGetter),
+  });
+  const premium = profile?.premiumActive ?? false;
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   return (
@@ -30,7 +42,7 @@ export function Nav() {
       <nav className="nav">
         <div className="nav-brand">
           <Crown size={22} />
-          <span>Checkers</span>
+          <span>Damas</span>
           {premium ? <span className="badge">Premium</span> : null}
         </div>
         <div className="nav-links">
@@ -52,28 +64,53 @@ export function Nav() {
           </SignedOut>
           <SignedIn>
             {user?.imageUrl && (
-              <img
-                src={user.imageUrl}
-                alt="avatar"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  border: "2px solid rgba(245, 158, 11, 0.45)",
-                }}
-              />
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <img
+                  src={user.imageUrl}
+                  alt="avatar"
+                  onClick={() => setShowProfileModal(true)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    border: "2px solid rgba(245, 158, 11, 0.45)",
+                    cursor: "pointer",
+                  }}
+                />
+                {premium && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: -6,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: "#f59e0b",
+                      borderRadius: "50%",
+                      width: 14,
+                      height: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 0 6px rgba(245, 158, 11, 0.6)",
+                    }}
+                  >
+                    <Crown size={9} color="#1f2937" strokeWidth={2.5} />
+                  </div>
+                )}
+              </div>
             )}
-            <button
-              className="btn ghost"
-              onClick={() => setShowSignOutModal(true)}
-              style={{ padding: "8px 14px", fontSize: 13 }}
-            >
-              <LogOut size={16} />
-              Salir
-            </button>
           </SignedIn>
         </div>
       </nav>
+
+      <ProfileModal
+        open={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onSignOut={() => {
+          setShowProfileModal(false);
+          setShowSignOutModal(true);
+        }}
+      />
 
       <ConfirmModal
         open={showSignOutModal}

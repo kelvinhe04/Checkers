@@ -154,7 +154,7 @@ function PremiumInner() {
             </>
           ) : (
             <>
-              <span className="badge muted">Plan Free</span>
+              <span className="badge muted">Plan Gratuito</span>
               <ul style={{ paddingLeft: 18, lineHeight: 1.7 }}>
                 <li>Acceso a todas las skins de fichas</li>
                 <li>Apoyo al proyecto</li>
@@ -206,7 +206,7 @@ function PremiumInner() {
                       {locked ? <><Lock size={14} /> Premium</> : "Premium"}
                     </span>
                   ) : (
-                    <span className="badge muted">Free</span>
+                    <span className="badge muted">Gratuito</span>
                   )}
                 </motion.div>
               );

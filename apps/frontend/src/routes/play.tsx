@@ -34,26 +34,26 @@ interface DifficultyOption {
 
 // Orden visual: Easy 8x8 → Hard 12x12 (de menor a mayor dificultad).
 const DIFFICULTY_OPTIONS: DifficultyOption[] = [
-  { label: "Easy 8 x 8", difficulty: "easy", boardSize: 8, stars: 1 },
-  { label: "Medium 8 x 8", difficulty: "medium", boardSize: 8, stars: 2 },
-  { label: "Hard 8 x 8", difficulty: "hard", boardSize: 8, stars: 3 },
-  { label: "Easy 10 x 10", difficulty: "easy", boardSize: 10, stars: 1 },
-  { label: "Medium 10 x 10", difficulty: "medium", boardSize: 10, stars: 2 },
-  { label: "Hard 10 x 10", difficulty: "hard", boardSize: 10, stars: 3 },
-  { label: "Easy 12 x 12", difficulty: "easy", boardSize: 12, stars: 1 },
-  { label: "Medium 12 x 12", difficulty: "medium", boardSize: 12, stars: 2 },
-  { label: "Hard 12 x 12", difficulty: "hard", boardSize: 12, stars: 3 },
+  { label: "Fácil 8×8", difficulty: "easy", boardSize: 8, stars: 1 },
+  { label: "Medio 8×8", difficulty: "medium", boardSize: 8, stars: 2 },
+  { label: "Difícil 8×8", difficulty: "hard", boardSize: 8, stars: 3 },
+  { label: "Fácil 10×10", difficulty: "easy", boardSize: 10, stars: 1 },
+  { label: "Medio 10×10", difficulty: "medium", boardSize: 10, stars: 2 },
+  { label: "Difícil 10×10", difficulty: "hard", boardSize: 10, stars: 3 },
+  { label: "Fácil 12×12", difficulty: "easy", boardSize: 12, stars: 1 },
+  { label: "Medio 12×12", difficulty: "medium", boardSize: 12, stars: 2 },
+  { label: "Difícil 12×12", difficulty: "hard", boardSize: 12, stars: 3 },
 ];
 
 const FIRST_MOVE_OPTIONS: { value: FirstMove; label: string }[] = [
-  { value: "computer", label: "Computer" },
-  { value: "player", label: "Player" },
-  { value: "random", label: "Random" },
+  { value: "computer", label: "Computadora" },
+  { value: "player", label: "Jugador" },
+  { value: "random", label: "Aleatorio" },
 ];
 
 const COLOR_OPTIONS: { value: ColorChoice; label: string; dot: string }[] = [
-  { value: "red", label: "Red", dot: "#dc2626" },
-  { value: "black", label: "Black", dot: "#111111" },
+  { value: "red", label: "Rojo", dot: "#dc2626" },
+  { value: "black", label: "Negro", dot: "#111111" },
   { value: "random", label: "Random", dot: "transparent" },
 ];
 
@@ -147,18 +147,18 @@ export function PlayPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <h1 className="options-title">OPTIONS</h1>
+          <h1 className="options-title">OPCIONES</h1>
 
           {/* Difficulty selector */}
           <div className="options-section">
-            <div className="options-label">Difficulty</div>
+            <div className="options-label">Dificultad</div>
             <div className="carousel">
               <button
                 className="carousel-arrow"
                 onClick={() => shift(setDiffIdx, diffIdx, DIFFICULTY_OPTIONS.length, -1)}
                 aria-label="anterior dificultad"
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={18} />
               </button>
               <div className="carousel-value">
                 <div className="carousel-text">{selectedDiff.label}</div>
@@ -169,14 +169,14 @@ export function PlayPage() {
                 onClick={() => shift(setDiffIdx, diffIdx, DIFFICULTY_OPTIONS.length, 1)}
                 aria-label="siguiente dificultad"
               >
-                <ChevronRight size={24} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
 
           {/* First move */}
           <div className="options-section">
-            <div className="options-label">First Move</div>
+            <div className="options-label">Primer turno</div>
             <div className="carousel">
               <button
                 className="carousel-arrow"
@@ -185,7 +185,7 @@ export function PlayPage() {
                 }
                 aria-label="anterior first move"
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={18} />
               </button>
               <div className="carousel-value">
                 <div className="carousel-text">{selectedFirstMove.label}</div>
@@ -197,14 +197,14 @@ export function PlayPage() {
                 }
                 aria-label="siguiente first move"
               >
-                <ChevronRight size={24} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
 
           {/* Color del jugador */}
           <div className="options-section">
-            <div className="options-label">Your Color</div>
+            <div className="options-label">Tu color</div>
             <div className="carousel">
               <button
                 className="carousel-arrow"
@@ -213,7 +213,7 @@ export function PlayPage() {
                 }
                 aria-label="anterior color"
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={18} />
               </button>
               <div className="carousel-value color-value">
                 {selectedColor.value === "random" ? (
@@ -242,7 +242,7 @@ export function PlayPage() {
                 }
                 aria-label="siguiente color"
               >
-                <ChevronRight size={24} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
@@ -250,11 +250,11 @@ export function PlayPage() {
           {/* Toggles */}
           <div className="options-toggles">
             <Toggle
-              label="Force Jumps"
+              label="Saltos forzados"
               value={forceJumps}
               onChange={setForceJumps}
             />
-            <Toggle label="Show Moves" value={showMoves} onChange={setShowMoves} />
+            <Toggle label="Mostrar jugadas" value={showMoves} onChange={setShowMoves} />
           </div>
 
           <motion.button
@@ -264,7 +264,7 @@ export function PlayPage() {
             whileTap={{ scale: 0.97 }}
             whileHover={{ y: -2 }}
           >
-            {createMutation.isPending ? "Creando…" : "Start"}
+            {createMutation.isPending ? "Creando…" : "Jugar"}
           </motion.button>
 
           {createMutation.error ? (
@@ -291,7 +291,7 @@ function Stars({ count }: { count: 1 | 2 | 3 }) {
       {[1, 2, 3].map((n) => (
         <Star
           key={n}
-          size={22}
+          size={16}
           className={`star ${n <= count ? "on" : "off"}`}
           fill={n <= count ? "#f5b301" : "none"}
         />
@@ -319,7 +319,7 @@ function Toggle({
         aria-pressed={value}
       >
         <span className="toggle-knob" />
-        <span className="toggle-text">{value ? "ON" : "OFF"}</span>
+        <span className="toggle-text">{value ? "SÍ" : "NO"}</span>
       </button>
     </div>
   );
@@ -376,7 +376,7 @@ function ActiveGames({
               </div>
               <div className="muted" style={{ fontSize: 13 }}>
                 movimiento {g.moveCount} · turno{" "}
-                {g.currentTurn === g.playerColor ? "tuyo" : "IA"}
+                {g.currentTurn === g.playerColor ? "tuyo" : "computadora"}
               </div>
             </div>
             <button className="btn secondary" onClick={() => onResume(g.id)}>

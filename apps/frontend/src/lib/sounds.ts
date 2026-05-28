@@ -35,6 +35,31 @@ export function playMoveSound(): void {
   }
 }
 
+/** Quick wooden "tuc" — piece dropped on the table while dealing. */
+export function playDealSound(): void {
+  try {
+    const ac = getCtx();
+    const now = ac.currentTime;
+
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.05);
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch {
+    // silently ignore if Web Audio is unavailable
+  }
+}
+
 /** Sharp two-tone crack — piece captured and removed. */
 export function playCaptureSound(): void {
   try {

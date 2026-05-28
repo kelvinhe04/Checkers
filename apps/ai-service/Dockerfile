@@ -8,7 +8,7 @@ WORKDIR /repo
 
 # Instalar pnpm (npm está vetado en este proyecto).
 # Bun no incluye pnpm. Lo activamos vía corepack (sin pasar por npm).
-RUN apk add --no-cache wget nodejs && corepack enable && corepack prepare pnpm@9.12.0 --activate
+RUN apk add --no-cache wget nodejs && bun install -g pnpm@9.12.0
 
 # Copiamos manifests para aprovechar cache.
 COPY package.json pnpm-workspace.yaml ./

@@ -46,7 +46,7 @@ function ProfileInner() {
               {data.premiumActive ? (
                 <span className="badge">Premium</span>
               ) : (
-                <span className="badge muted">Free</span>
+                <span className="badge muted">Gratuito</span>
               )}
             </p>
           </div>
@@ -57,7 +57,7 @@ function ProfileInner() {
             <Stat label="Derrotas" value={data.stats.losses} />
             <Stat label="Empates" value={data.stats.draws} />
             <Stat
-              label="Win rate"
+              label="Rendimiento"
               value={`${(data.stats.winRate * 100).toFixed(1)}%`}
             />
             <Stat

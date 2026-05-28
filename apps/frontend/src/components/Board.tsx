@@ -27,6 +27,7 @@ import {
   positionsEqual,
 } from "@checkers/shared";
 import type { SkinDef } from "../lib/skins.js";
+import { playDealSound } from "../lib/sounds.js";
 
 interface Props {
   board: BoardT;
@@ -35,7 +36,7 @@ interface Props {
   interactive: boolean;
   skin: SkinDef;
   onMove: (move: Move) => void;
-  /** Si está esperando a la IA (deshabilita interacciones). */
+  /** Si está esperando a la computadora (deshabilita interacciones). */
   awaitingAi?: boolean;
   /** Reglas: forceJumps y showMoves. */
   options?: GameOptions;
@@ -103,7 +104,10 @@ export function Board({
   useEffect(() => {
     if (!dealing) return;
     if (dealtCount >= dealOrder.length) return;
-    const t = setTimeout(() => setDealtCount((c) => c + 1), 60);
+    const t = setTimeout(() => {
+      playDealSound();
+      setDealtCount((c) => c + 1);
+    }, 60);
     return () => clearTimeout(t);
   }, [dealing, dealtCount, dealOrder.length]);
 
@@ -174,11 +178,11 @@ export function Board({
     <div className="table-wrap">
       <div className="table-felt">
         <div className="board-frame" style={{ "--n": size } as React.CSSProperties}>
-          {/* Letras arriba (sobre la madera) */}
+          {/* Letras arriba (invertidas para efecto 3D) */}
           <div className="coord-row coord-row-top">
             <span className="coord-corner" />
             {letters.map((l) => (
-              <span key={`tl-${l}`} className="coord">
+              <span key={`tl-${l}`} className="coord coord-flip">
                 {l}
               </span>
             ))}
@@ -251,10 +255,10 @@ export function Board({
               )}
             </div>
 
-            {/* Números derecha */}
-            <div className="coord-col">
+            {/* Números derecha (invertidos para efecto 3D) */}
+            <div className="coord-col coord-col-right">
               {nums.map((n) => (
-                <span key={`rn-${n}`} className="coord">
+                <span key={`rn-${n}`} className="coord coord-flip">
                   {n}
                 </span>
               ))}

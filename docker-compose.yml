@@ -16,8 +16,6 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-checkers}
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
       interval: 10s
