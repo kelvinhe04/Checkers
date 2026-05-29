@@ -66,7 +66,7 @@ export function PlayPage() {
   const auth = useAuth();
   const navigate = useNavigate();
 
-  const [diffIdx, setDiffIdx] = useState(4); // arranca en Medium 10x10
+  const [diffIdx, setDiffIdx] = useState(0); // arranca en Fácil 8x8
   const [firstMoveIdx, setFirstMoveIdx] = useState(1); // Player
   const [colorIdx, setColorIdx] = useState(0); // Red por defecto
   const [forceJumps, setForceJumps] = useState(false);

@@ -66,7 +66,6 @@ export const clerkAppearance = {
       minHeight: "52px",
       fontSize: "0.95rem",
       fontWeight: 600,
-      transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
       boxShadow:
         "inset 0 1px 0 rgba(255,255,255,0.07), 0 2px 8px rgba(0,0,0,0.25)",
       justifyContent: "center",
@@ -83,9 +82,7 @@ export const clerkAppearance = {
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
-      lineHeight: "1",
       padding: "2px 8px",
-      transform: "translateY(8px)",
       fontSize: "0.7rem",
       borderRadius: "999px",
       pointerEvents: "none",
@@ -142,7 +139,6 @@ export const clerkAppearance = {
       textTransform: "uppercase",
       boxShadow:
         "inset 0 1px 0 rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.35)",
-      transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
     },
 
     // ── Footer — ocultar branding de Clerk ──────────────────────────────────

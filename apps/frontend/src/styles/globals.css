@@ -98,16 +98,17 @@ a {
 /* ── "Last used": píldora de Clerk ── */
 .cl-socialButtonsBlockButtonBadge,
 [data-localization-key*="badge"] {
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  line-height: 1 !important;
   padding: 2px 8px !important;
-  transform: translateY(12px) !important;
+  min-height: 0 !important;
+  height: fit-content !important;
   font-size: 0.7rem !important;
   border-radius: 999px !important;
   visibility: visible !important;
   pointer-events: none !important;
+  align-self: center !important;
 }
 .cl-badge,
 [class*="cl-badge"],
@@ -127,53 +128,52 @@ a {
 /* ── Botón CONTINUE: quitar borde ámbar que aplica colorPrimary ── */
 .cl-formButtonPrimary {
   border: none !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 6px 18px rgba(0, 0, 0, 0.35) !important;
   transition:
-    background 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
-  will-change: background, box-shadow, transform;
+    filter 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: filter, box-shadow, transform, opacity;
+  filter: brightness(0.92);
+  opacity: 0.88;
+}
+.cl-formButtonPrimary:hover {
+  filter: brightness(1.08) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 28px rgba(58, 160, 90, 0.28),
+    0 8px 22px rgba(0, 0, 0, 0.4) !important;
+  transform: translateY(-2px) !important;
+  opacity: 1 !important;
+}
+.cl-formButtonPrimary:active {
+  transform: translateY(0) scale(0.97) !important;
+  transition-duration: 80ms !important;
 }
 .cl-formButtonPrimary:focus,
 .cl-formButtonPrimary:focus-visible {
   outline: none !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 3px rgba(58, 138, 90, 0.35),
-    0 6px 18px rgba(0, 0, 0, 0.35) !important;
-}
-.cl-formButtonPrimary:hover {
-  background: linear-gradient(180deg, #48a86e 0%, #347a4e 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 0 22px rgba(58, 160, 90, 0.22),
-    0 6px 18px rgba(0, 0, 0, 0.35) !important;
-  transform: translateY(-1px);
 }
 
-/* ── Hover en botones OAuth (Google, Microsoft) ── */
-/* transition en el estado BASE para que anime tanto la entrada como la salida */
+/* ── Botones OAuth (Google, Microsoft) ── */
 .cl-socialButtonsBlockButton {
   transition:
-    background 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
-  will-change: background, border-color, box-shadow, transform;
+    filter 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: filter, box-shadow, transform, opacity;
+  filter: brightness(0.92);
+  opacity: 0.88;
 }
 .cl-socialButtonsBlockButton:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(50, 92, 62, 0.98) 0%,
-    rgba(32, 64, 42, 0.98) 100%
-  ) !important;
-  border-color: rgba(160, 130, 80, 0.7) !important;
+  filter: brightness(1.08) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 6px 18px rgba(0, 0, 0, 0.32) !important;
-  transform: translateY(-2px);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 6px 20px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(58, 138, 90, 0.18) !important;
+  transform: translateY(-2px) !important;
+  opacity: 1 !important;
 }
 .cl-socialButtonsBlockButton:active {
   transform: translateY(0) scale(0.97) !important;

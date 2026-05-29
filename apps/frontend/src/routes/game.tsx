@@ -3,7 +3,7 @@
 // =========================================================================
 
 import { Bot, Dices, Handshake, Move as MoveIcon, Shuffle, Skull, Trophy } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   SignedIn,
   SignedOut,
@@ -71,6 +71,12 @@ function GameInner() {
   );
   /** Si entramos por primera vez en moveCount=0, ejecutamos la animación de reparto una sola vez. */
   const [dealing, setDealing] = useState(false);
+  /** Evita que triggerAiTurn se llame dos veces por el mismo turno (WS + REST aplican el mismo snapshot). */
+  const aiTurnPendingRef = useRef(false);
+  /** Controla cuándo mostrar el modal de fin de partida (separado de finished para dar tiempo al sonido). */
+  const [showGameOver, setShowGameOver] = useState(false);
+  /** True mientras hay un setTimeout pendiente de mostrar el movimiento de la IA (sonido + snapshot). */
+  const pendingAiSoundRef = useRef(false);
 
   // Leer premium desde el perfil del backend (no de Clerk publicMetadata,
   // que no se actualiza automáticamente al comprar).
@@ -89,11 +95,13 @@ function GameInner() {
   useEffect(() => {
     let cancelled = false;
     setError(null);
+    setShowGameOver(false);
     api
       .getGame(gameId, tokenGetter)
       .then((snap) => {
         if (!cancelled) {
           setSnapshot(snap);
+          if (snap.status !== "active") setShowGameOver(true);
           // Si la partida está recién creada (sin movimientos), animamos reparto.
           if (snap.moveCount === 0 && snap.status === "active") {
             setDealing(true);
@@ -130,18 +138,18 @@ function GameInner() {
               break;
             case "move_applied":
               if (e.by === "red" || e.by === "black") {
-                // Determine if this is the AI's move by checking snapshot context.
-                // We delay AI moves and play the appropriate sound after the pause.
                 setSnapshot((prev) => {
                   const isAiMove = prev !== null && e.by === prev.aiColor;
                   if (isAiMove) {
+                    pendingAiSoundRef.current = true;
                     setTimeout(() => {
                       setSnapshot(e.snapshot);
                       setAwaitingAi(false);
+                      pendingAiSoundRef.current = false;
                       if (e.move.captures.length > 0) playCaptureSound();
                       else playMoveSound();
                     }, AI_MOVE_DELAY_MS);
-                    return prev; // keep current snapshot until delay fires
+                    return prev;
                   }
                   // Player's own move: apply immediately (sound already played)
                   return e.snapshot;
@@ -151,10 +159,21 @@ function GameInner() {
                 setAwaitingAi(false);
               }
               break;
-            case "game_over":
-              setSnapshot(e.snapshot);
-              setAwaitingAi(false);
+            case "game_over": {
+              // Esperar a que el sonido del último movimiento termine antes de mostrar el modal.
+              // Si hay un movimiento de la IA pendiente: AI_MOVE_DELAY_MS (sonido aún no suena) + margen.
+              // Si el último movimiento fue del jugador: solo un margen para que el sonido corto acabe.
+              const SOUND_TAIL_MS = 250;
+              const gameOverDelay = pendingAiSoundRef.current
+                ? AI_MOVE_DELAY_MS + SOUND_TAIL_MS
+                : SOUND_TAIL_MS;
+              setTimeout(() => {
+                setSnapshot(e.snapshot);
+                setAwaitingAi(false);
+                setShowGameOver(true);
+              }, gameOverDelay);
               break;
+            }
             case "error":
               setError(e.message);
               setAwaitingAi(false);
@@ -176,19 +195,36 @@ function GameInner() {
 
   useEffect(() => {
     if (!dealing && snapshot && snapshot.currentTurn === snapshot.aiColor && snapshot.status === "active") {
+      // Si awaitingAi ya está activo, api.playMove está procesando el turno de la IA internamente: no llamar triggerAiTurn.
+      if (awaitingAi || aiTurnPendingRef.current) return;
+      aiTurnPendingRef.current = true;
       setAwaitingAi(true);
       api.triggerAiTurn(gameId, tokenGetter).then((res) => {
         setTimeout(() => {
           setSnapshot(res.snapshot);
           setAwaitingAi(false);
+          aiTurnPendingRef.current = false;
         }, AI_MOVE_DELAY_MS + 200);
       }).catch((err: Error) => {
         setError(err.message);
         setAwaitingAi(false);
+        aiTurnPendingRef.current = false;
       });
+    } else {
+      aiTurnPendingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealing, snapshot]);
+
+  // Fallback: si el WS no envía game_over (reconexión, WS desconectado),
+  // mostrar el modal cuando el snapshot ya refleje partida terminada.
+  useEffect(() => {
+    if (snapshot && snapshot.status !== "active" && !showGameOver) {
+      const timer = setTimeout(() => setShowGameOver(true), 400);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot?.status]);
 
   async function handleMove(move: Move) {
     if (!snapshot) return;
@@ -341,7 +377,7 @@ function GameInner() {
       />
 
       <AnimatePresence>
-        {finished && (
+        {showGameOver && (
           <motion.div
             className="game-over-backdrop"
             initial={{ opacity: 0 }}
