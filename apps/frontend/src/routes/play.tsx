@@ -6,12 +6,12 @@
 //   - Show Moves: ON/OFF
 // =========================================================================
 
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import type {
   BoardSize,
   Difficulty,
@@ -71,6 +71,9 @@ export function PlayPage() {
   const [colorIdx, setColorIdx] = useState(0); // Red por defecto
   const [forceJumps, setForceJumps] = useState(false);
   const [showMoves, setShowMoves] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
 
   const selectedDiff = DIFFICULTY_OPTIONS[diffIdx]!;
   const selectedFirstMove = FIRST_MOVE_OPTIONS[firstMoveIdx]!;
@@ -117,6 +120,7 @@ export function PlayPage() {
           playerColor: resolveColor(selectedColor.value),
           forceJumps,
           showMoves,
+          skinId: readSkinId(),
         },
         tokenGetter,
       ),
@@ -277,9 +281,56 @@ export function PlayPage() {
         <ActiveGames
           loading={activeGamesQuery.isLoading}
           games={activeGamesQuery.data?.games ?? []}
-          skin={skin}
+          premium={premium}
+          selectedIds={selectedIds}
+          onToggleSelect={(id) => {
+            setSelectedIds((prev) => {
+              const next = new Set(prev);
+              if (next.has(id)) next.delete(id);
+              else next.add(id);
+              return next;
+            });
+          }}
+          onSelectAll={() => {
+            const all = activeGamesQuery.data?.games ?? [];
+            setSelectedIds((prev) =>
+              prev.size === all.length ? new Set() : new Set(all.map((g) => g.id)),
+            );
+          }}
           onResume={(id) => navigate({ to: "/game/$gameId", params: { gameId: id } })}
+          onDelete={(id) => setDeletingId(id)}
+          onBatchDelete={() => setBatchDeleting(true)}
+          onCancelSelection={() => setSelectedIds(new Set())}
         />
+
+        <AnimatePresence>
+          {batchDeleting && (
+            <ConfirmModal
+              key="confirm-batch-delete"
+              title="Eliminar partidas"
+              message={`¿Eliminar ${selectedIds.size} partida(s)? Esta acción no se puede deshacer.`}
+              confirmLabel="Eliminar todo"
+              onCancel={() => setBatchDeleting(false)}
+              onConfirm={async () => {
+                await api.batchDeleteGames([...selectedIds], tokenGetter);
+                setBatchDeleting(false);
+                setSelectedIds(new Set());
+                activeGamesQuery.refetch();
+              }}
+            />
+          )}
+          {deletingId && (
+            <ConfirmModal
+              key="confirm-delete"
+              onCancel={() => setDeletingId(null)}
+              onConfirm={async () => {
+                await api.deleteGame(deletingId, tokenGetter);
+                setDeletingId(null);
+                activeGamesQuery.refetch();
+              }}
+            />
+          )}
+        </AnimatePresence>
       </SignedIn>
     </div>
   );
@@ -328,15 +379,26 @@ function Toggle({
 function ActiveGames({
   loading,
   games,
-  skin,
+  premium,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
   onResume,
+  onDelete,
+  onBatchDelete,
+  onCancelSelection,
 }: {
   loading: boolean;
   games: GameSnapshot[];
-  skin: ReturnType<typeof getSkin>;
+  premium: boolean;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onSelectAll: () => void;
   onResume: (id: string) => void;
+  onDelete: (id: string) => void;
+  onBatchDelete: () => void;
+  onCancelSelection: () => void;
 }) {
-  const items = useMemo(() => games.slice(0, 6), [games]);
   if (loading) {
     return (
       <div className="active-games-card">
@@ -345,46 +407,137 @@ function ActiveGames({
       </div>
     );
   }
-  if (items.length === 0) return null;
+  if (games.length === 0) return null;
+  const allSelected = games.every((g) => selectedIds.has(g.id));
   return (
     <div className="active-games-card">
-      <h3>Partidas activas</h3>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {items.map((g) => (
-          <li
-            key={g.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "10px 0",
-              borderBottom: "1px solid rgba(148,163,184,0.12)",
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                {g.difficulty} · {g.boardSize}×{g.boardSize} ·
-                <span
-                  className="color-dot"
-                  style={{
-                    width: 16,
-                    height: 16,
-                    background: g.playerColor === "red" ? skin.palette.red : skin.palette.black,
-                    border: `2px solid ${g.playerColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
-                    flexShrink: 0,
-                  }}
-                />
-              </div>
-              <div className="muted" style={{ fontSize: 13 }}>
-                movimiento {g.moveCount} · turno{" "}
-                {g.currentTurn === g.playerColor ? "tuyo" : "computadora"}
-              </div>
-            </div>
-            <button className="btn secondary" onClick={() => onResume(g.id)}>
-              Continuar
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="active-games-header">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            className="checkbox-input"
+            checked={allSelected}
+            onChange={onSelectAll}
+          />
+          <span className="checkbox-custom" />
+        </label>
+        <h3>Partidas activas</h3>
+      </div>
+      {selectedIds.size > 0 && (
+        <div className="batch-bar">
+          <span className="batch-count">{selectedIds.size} seleccionada(s)</span>
+          <button className="btn" onClick={onBatchDelete}>
+            Eliminar seleccionadas
+          </button>
+          <button className="btn ghost" onClick={onCancelSelection}>
+            Cancelar
+          </button>
+        </div>
+      )}
+      <div className="active-games-scroll">
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {games.map((g) => {
+            const gameSkin = (() => {
+              const s = getSkin(g.skinId ?? "classic");
+              return s.premium && !premium ? getSkin("classic") : s;
+            })();
+            return (
+              <li
+                key={g.id}
+                className="active-game-row"
+              >
+                <div className="active-game-left">
+                  <label className="checkbox-label row-checkbox">
+                    <input
+                      type="checkbox"
+                      className="checkbox-input"
+                      checked={selectedIds.has(g.id)}
+                      onChange={() => onToggleSelect(g.id)}
+                    />
+                    <span className="checkbox-custom" />
+                  </label>
+                  <div className="active-game-info">
+                    <div className="active-game-title">
+                      {g.difficulty} · {g.boardSize}×{g.boardSize} ·
+                      <span
+                        className="color-dot"
+                        style={{
+                          width: 16,
+                          height: 16,
+                          background: g.playerColor === "red" ? gameSkin.palette.red : gameSkin.palette.black,
+                          border: `2px solid ${g.playerColor === "red" ? gameSkin.palette.redStroke : gameSkin.palette.blackStroke}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                    </div>
+                    <div className="muted" style={{ fontSize: 13 }}>
+                      movimiento {g.moveCount} · turno{" "}
+                      {g.currentTurn === g.playerColor ? "tuyo" : "computadora"}
+                    </div>
+                  </div>
+                </div>
+                <div className="active-game-actions">
+                  <button
+                    className="btn-icon btn-icon-danger"
+                    onClick={() => onDelete(g.id)}
+                    title="Eliminar partida"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <button className="btn secondary" onClick={() => onResume(g.id)}>
+                    Continuar
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
+  );
+}
+
+function ConfirmModal({
+  title = "Eliminar partida",
+  message = "¿Estás seguro? Esta acción no se puede deshacer.",
+  confirmLabel = "Eliminar",
+  onCancel,
+  onConfirm,
+}: {
+  title?: string;
+  message?: string;
+  confirmLabel?: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <motion.div
+      className="confirm-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onCancel}
+    >
+      <motion.div
+        className="confirm-modal"
+        initial={{ scale: 0.88, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.88, opacity: 0, y: 20 }}
+        transition={{ type: "spring", stiffness: 340, damping: 26 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="confirm-title">{title}</h2>
+        <p className="confirm-desc">{message}</p>
+        <div className="confirm-actions">
+          <button className="btn ghost" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button className="btn" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

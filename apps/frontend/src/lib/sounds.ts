@@ -35,26 +35,38 @@ export function playMoveSound(): void {
   }
 }
 
-/** Quick wooden "tuc" — piece dropped on the table while dealing. */
+/** Soft wooden drop — piece placed gently on the board while dealing. */
 export function playDealSound(): void {
   try {
     const ac = getCtx();
     const now = ac.currentTime;
 
+    // Cuerpo principal: golpe sordo y cálido
     const osc = ac.createOscillator();
     const gain = ac.createGain();
-
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(180, now + 0.05);
-
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.07);
+    gain.gain.setValueAtTime(0.11, now);
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
     osc.connect(gain);
     gain.connect(ac.destination);
     osc.start(now);
-    osc.stop(now + 0.08);
+    osc.stop(now + 0.13);
+
+    // Matiz: roce muy sutil de la ficha contra la madera
+    const osc2 = ac.createOscillator();
+    const gain2 = ac.createGain();
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(580, now);
+    osc2.frequency.exponentialRampToValueAtTime(200, now + 0.03);
+    gain2.gain.setValueAtTime(0.035, now);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc2.connect(gain2);
+    gain2.connect(ac.destination);
+    osc2.start(now);
+    osc2.stop(now + 0.05);
   } catch {
     // silently ignore if Web Audio is unavailable
   }

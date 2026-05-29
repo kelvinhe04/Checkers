@@ -302,12 +302,19 @@ a:hover {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 150ms ease, background 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease;
 }
 .btn:hover {
   background: var(--accent-strong);
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
-  transform: translateY(-1px);
+  color: #1f2937;
+  box-shadow:
+    0 0 20px rgba(245, 158, 11, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 .btn:active {
   transform: scale(0.97);
@@ -400,6 +407,18 @@ table.table th {
   color: var(--danger);
   border-color: rgba(239, 68, 68, 0.35);
 }
+.badge.turn-player {
+  background: rgba(52, 211, 153, 0.18);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.25);
+}
+.badge.turn-ai {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+}
 
 /* ============================================================
    Tablero con marco de madera (estilo billiard table)
@@ -411,31 +430,7 @@ table.table th {
   padding: 12px 8px;
 }
 
-/* La "mesa" verde de fondo */
-.table-felt {
-  background:
-    radial-gradient(ellipse at center, var(--felt-green) 0%, var(--felt-green-dark) 100%);
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow:
-    inset 0 0 60px rgba(0, 0, 0, 0.35),
-    0 14px 32px rgba(0, 0, 0, 0.5);
-  position: relative;
-}
-.table-felt::before {
-  /* textura sutil de fieltro */
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background-image:
-    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-  background-size: 4px 4px, 6px 6px;
-  background-position: 0 0, 2px 3px;
-  opacity: 0.5;
-}
+
 
 /* El marco de madera que envuelve el tablero */
 .board-frame {
@@ -975,11 +970,152 @@ table.table th {
     0 16px 36px rgba(0, 0, 0, 0.55);
 }
 .active-games-card h3 {
-  margin: 0 0 10px;
+  margin: 0;
   color: #d6e9c8;
 }
 .active-games-card li {
   border-bottom-color: rgba(80, 140, 95, 0.18) !important;
+}
+
+.active-games-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.checkbox-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.4);
+  transition: border-color 150ms ease, background 150ms ease;
+  flex-shrink: 0;
+}
+
+.checkbox-input:checked + .checkbox-custom {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox-input:checked + .checkbox-custom::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid #1f2937;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-top: -1px;
+}
+
+.checkbox-input:focus-visible + .checkbox-custom {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.row-checkbox {
+  flex-shrink: 0;
+}
+
+.batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  border-top: 1px solid rgba(80, 140, 95, 0.2);
+  border-bottom: 1px solid rgba(80, 140, 95, 0.2);
+}
+
+.batch-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.active-games-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.active-game-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148,163,184,0.12);
+}
+.active-game-row:last-child {
+  border-bottom: none;
+}
+
+.active-game-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.active-game-info {
+  min-width: 0;
+}
+
+.active-game-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-game-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--text-muted);
+  transition: background 150ms ease, color 150ms ease;
+}
+.btn-icon:hover {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--text);
+}
+.btn-icon-danger:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: var(--danger);
 }
 
 /* Game page: el fondo verde lo aplica directamente body.game-page-active
@@ -1084,5 +1220,47 @@ table.table th {
 .game-over-actions {
   display: flex;
   gap: 12px;
+  justify-content: center;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.confirm-modal {
+  background: #0f2318;
+  border: 1px solid rgba(107, 68, 35, 0.5);
+  border-radius: 18px;
+  padding: 36px 44px;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  min-width: 300px;
+  max-width: 380px;
+}
+
+.confirm-title {
+  margin: 0 0 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.confirm-desc {
+  margin: 0 0 28px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
   justify-content: center;
 }

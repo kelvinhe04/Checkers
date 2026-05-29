@@ -23,7 +23,7 @@ app.use(
   "*",
   cors({
     origin: (origin) => origin ?? config.frontendOrigin,
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "X-Correlation-Id"],
     credentials: true,
     maxAge: 600,

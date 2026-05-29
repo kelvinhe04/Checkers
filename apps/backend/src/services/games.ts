@@ -32,6 +32,8 @@ interface CreateGameInput {
   firstTurn?: PieceColor;
   boardSize: BoardSize;
   options: GameOptions;
+  /** Skin visual elegida por el jugador al crear la partida. */
+  skinId: string;
 }
 
 export interface PlayerMoveInput {
@@ -74,6 +76,7 @@ function toSnapshot(doc: GameDoc): GameSnapshot {
     winnerId: doc.winnerId,
     moveCount: doc.moveCount,
     options: docOptions(doc),
+    skinId: doc.skinId ?? "classic",
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -102,22 +105,13 @@ export async function createGame(input: CreateGameInput): Promise<GameSnapshot> 
       forceJumps: input.options.forceJumps,
       showMoves: input.options.showMoves,
     },
+    skinId: input.skinId,
     createdAt: now,
     updatedAt: now,
   };
   await games.insertOne(doc);
 
-  let snap = toSnapshot(doc);
-
-  // Si el jugador eligió jugar con negras, la IA debe abrir.
-  if (snap.currentTurn === aiColor) {
-    snap = await playAiTurnIfNeeded(snap, {
-      correlationId: crypto.randomUUID(),
-      log: undefined,
-    });
-  }
-
-  return snap;
+  return toSnapshot(doc);
 }
 
 export async function getGame(
@@ -134,7 +128,6 @@ export async function listActiveGames(user: UserDoc): Promise<GameSnapshot[]> {
   const docs = await games
     .find({ playerId: user.clerkId, status: "active" })
     .sort({ updatedAt: -1 })
-    .limit(20)
     .toArray();
   return docs.map(toSnapshot);
 }
@@ -353,6 +346,43 @@ export async function resumeGame(
   const snap = await getGame(user, gameId);
   if (!snap) throw new GameError("game_not_found", 404);
   return snap;
+}
+
+export async function deleteGame(
+  user: UserDoc,
+  gameId: string,
+): Promise<void> {
+  const { games } = collections();
+  const doc = await games.findOne({ gameId, playerId: user.clerkId });
+  if (!doc) throw new GameError("game_not_found", 404);
+  if (doc.status !== "active") return;
+  await games.updateOne(
+    { gameId },
+    { $set: { status: "abandoned", updatedAt: new Date() } },
+  );
+}
+
+export async function batchDeleteGames(
+  user: UserDoc,
+  gameIds: string[],
+): Promise<void> {
+  const { games } = collections();
+  await games.updateMany(
+    { gameId: { $in: gameIds }, playerId: user.clerkId, status: "active" },
+    { $set: { status: "abandoned", updatedAt: new Date() } },
+  );
+}
+
+export async function triggerAiTurn(
+  gameId: string,
+  ctx: AiTurnCtx,
+): Promise<GameSnapshot> {
+  const { games } = collections();
+  const doc = await games.findOne({ gameId });
+  if (!doc) throw new GameError("game_not_found", 404);
+  const snap = toSnapshot(doc);
+  if (snap.currentTurn !== snap.aiColor) return snap;
+  return playAiTurnIfNeeded(snap, ctx);
 }
 
 export class GameError extends Error {

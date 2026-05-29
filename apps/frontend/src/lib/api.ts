@@ -83,6 +83,7 @@ export const api = {
       firstMove?: FirstMove;
       forceJumps?: boolean;
       showMoves?: boolean;
+      skinId?: string;
     },
     getToken: GetToken,
   ) {
@@ -108,6 +109,30 @@ export const api = {
   resumeGame(id: string, getToken: GetToken) {
     return request<GameSnapshot>(
       `/api/games/${id}/resume`,
+      { method: "POST" },
+      getToken,
+    );
+  },
+
+  deleteGame(id: string, getToken: GetToken) {
+    return request<{ ok: boolean }>(
+      `/api/games/${id}`,
+      { method: "DELETE" },
+      getToken,
+    );
+  },
+
+  batchDeleteGames(ids: string[], getToken: GetToken) {
+    return request<{ ok: boolean }>(
+      "/api/games/batch-delete",
+      { method: "POST", body: JSON.stringify({ ids }) },
+      getToken,
+    );
+  },
+
+  triggerAiTurn(id: string, getToken: GetToken) {
+    return request<{ snapshot: GameSnapshot }>(
+      `/api/games/${id}/ai-turn`,
       { method: "POST" },
       getToken,
     );

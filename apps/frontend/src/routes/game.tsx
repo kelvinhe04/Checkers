@@ -19,6 +19,16 @@ import {
   type WsServerEvent,
   countPieces,
 } from "@checkers/shared";
+
+function lighten(hex: string): string {
+  const m = hex.replace("#", "");
+  if (m.length !== 6) return hex;
+  const r = parseInt(m.slice(0, 2), 16);
+  const g = parseInt(m.slice(2, 4), 16);
+  const b = parseInt(m.slice(4, 6), 16);
+  const mix = (c: number) => Math.min(255, Math.round(c + (255 - c) * 0.35));
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
 import { Board } from "../components/Board.js";
 import { api } from "../lib/api.js";
 import { env } from "../lib/env.js";
@@ -71,10 +81,10 @@ function GameInner() {
   const premium = profile?.premiumActive ?? false;
 
   const skin = useMemo(() => {
-    const s = getSkin(readSkinId());
+    const s = getSkin(snapshot?.skinId ?? readSkinId());
     if (s.premium && !premium) return getSkin("classic");
     return s;
-  }, [premium]);
+  }, [snapshot?.skinId, premium]);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,6 +174,22 @@ function GameInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
+  useEffect(() => {
+    if (!dealing && snapshot && snapshot.currentTurn === snapshot.aiColor && snapshot.status === "active") {
+      setAwaitingAi(true);
+      api.triggerAiTurn(gameId, tokenGetter).then((res) => {
+        setTimeout(() => {
+          setSnapshot(res.snapshot);
+          setAwaitingAi(false);
+        }, AI_MOVE_DELAY_MS + 200);
+      }).catch((err: Error) => {
+        setError(err.message);
+        setAwaitingAi(false);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealing, snapshot]);
+
   async function handleMove(move: Move) {
     if (!snapshot) return;
 
@@ -226,8 +252,10 @@ function GameInner() {
     bannerIcon = <Bot size={16} />;
   } else if (isPlayerTurn) {
     banner = "Tu turno";
+    bannerClass = "turn-player";
   } else {
     banner = "Turno de la computadora";
+    bannerClass = "turn-ai";
   }
 
   return (
@@ -264,23 +292,25 @@ function GameInner() {
               <>
                 <div className="stat-chip" title="Tus fichas restantes">
                   <span style={{
-                    width: 10,
-                    height: 10,
+                    width: 11,
+                    height: 11,
                     borderRadius: "50%",
-                    background: playerColor,
-                    border: `1.5px solid ${snapshot.playerColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
+                    background: `radial-gradient(circle at 30% 30%, ${lighten(playerColor)} 0%, ${playerColor} 65%)`,
+                    border: `2px solid ${snapshot.playerColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
                     display: "inline-block",
+                    boxShadow: "inset 0 -1.5px 0 rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.14), 0 1.5px 3.5px rgba(0,0,0,0.5)",
                   }} />
                   <span>{playerTotal}</span>
                 </div>
                 <div className="stat-chip" title="Fichas restantes de la computadora">
                   <span style={{
-                    width: 10,
-                    height: 10,
+                    width: 11,
+                    height: 11,
                     borderRadius: "50%",
-                    background: aiColor,
-                    border: `1.5px solid ${snapshot.aiColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
+                    background: `radial-gradient(circle at 30% 30%, ${lighten(aiColor)} 0%, ${aiColor} 65%)`,
+                    border: `2px solid ${snapshot.aiColor === "red" ? skin.palette.redStroke : skin.palette.blackStroke}`,
                     display: "inline-block",
+                    boxShadow: "inset 0 -1.5px 0 rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.14), 0 1.5px 3.5px rgba(0,0,0,0.5)",
                   }} />
                   <span>{aiTotal}</span>
                 </div>

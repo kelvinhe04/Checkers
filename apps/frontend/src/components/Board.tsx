@@ -176,8 +176,7 @@ export function Board({
 
   return (
     <div className="table-wrap">
-      <div className="table-felt">
-        <div className="board-frame" style={{ "--n": size } as React.CSSProperties}>
+      <div className="board-frame" style={{ "--n": size } as React.CSSProperties}>
           {/* Letras arriba (invertidas para efecto 3D) */}
           <div className="coord-row coord-row-top">
             <span className="coord-corner" />
@@ -277,9 +276,8 @@ export function Board({
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 function PieceDot({ square, skin }: { square: Square; skin: SkinDef }) {
   const color = getColor(square);

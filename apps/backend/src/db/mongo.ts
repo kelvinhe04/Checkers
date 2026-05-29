@@ -47,6 +47,8 @@ export interface GameDoc {
     forceJumps: boolean;
     showMoves: boolean;
   };
+  /** Skin que se usó al crear la partida. Opcional para compatibilidad. */
+  skinId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

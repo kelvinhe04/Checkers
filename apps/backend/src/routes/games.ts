@@ -3,12 +3,15 @@ import { z } from "zod";
 import { type BoardSize, type FirstMove } from "@checkers/shared";
 import { authMiddleware } from "../lib/auth.js";
 import {
+  batchDeleteGames,
   createGame,
+  deleteGame,
   GameError,
   getGame,
   listActiveGames,
   playerMove,
   resumeGame,
+  triggerAiTurn,
 } from "../services/games.js";
 
 export const gamesRouter = new Hono();
@@ -34,6 +37,7 @@ const CreateGameSchema = z.object({
   firstMove: z.enum(["computer", "player", "random"]).default("player"),
   forceJumps: z.boolean().default(true),
   showMoves: z.boolean().default(true),
+  skinId: z.string().default("classic"),
 });
 
 function resolveFirstTurn(
@@ -71,6 +75,7 @@ gamesRouter.post("/", async (c) => {
       forceJumps: parsed.data.forceJumps,
       showMoves: parsed.data.showMoves,
     },
+    skinId: parsed.data.skinId,
   });
   return c.json(snap, 201);
 });
@@ -101,6 +106,53 @@ gamesRouter.post("/:id/resume", async (c) => {
       );
     }
     throw err;
+  }
+});
+
+gamesRouter.post("/batch-delete", async (c) => {
+  const user = c.get("userDoc");
+  const body = await c.req.json().catch(() => ({}));
+  const ids = Array.isArray(body?.ids) ? body.ids.filter((x: unknown) => typeof x === "string") : [];
+  if (ids.length === 0) return c.json({ error: "no_ids" }, 400);
+  await batchDeleteGames(user, ids);
+  return c.json({ ok: true });
+});
+
+gamesRouter.delete("/:id", async (c) => {
+  const user = c.get("userDoc");
+  try {
+    await deleteGame(user, c.req.param("id"));
+    return c.json({ ok: true });
+  } catch (err) {
+    if (err instanceof GameError) {
+      return c.json(
+        { error: err.message },
+        err.httpStatus as 400 | 401 | 404 | 409 | 422 | 500,
+      );
+    }
+    throw err;
+  }
+});
+
+gamesRouter.post("/:id/ai-turn", async (c) => {
+  const user = c.get("userDoc");
+  const log = c.get("log");
+  const correlationId = c.get("correlationId");
+  try {
+    const snap = await triggerAiTurn(c.req.param("id"), {
+      correlationId,
+      log,
+    });
+    return c.json({ snapshot: snap });
+  } catch (err) {
+    if (err instanceof GameError) {
+      return c.json(
+        { error: err.message },
+        err.httpStatus as 400 | 401 | 404 | 409 | 422 | 500,
+      );
+    }
+    log.error({ err }, "ai_turn_failed");
+    return c.json({ error: "internal_error" }, 500);
   }
 });
 

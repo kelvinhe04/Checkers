@@ -87,6 +87,8 @@ export interface GameSnapshot {
   winnerId: string | null;
   moveCount: number;
   options: GameOptions;
+  /** Skin que se usó al crear la partida. */
+  skinId: string;
   createdAt: string;
   updatedAt: string;
 }
