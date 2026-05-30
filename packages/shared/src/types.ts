@@ -146,6 +146,14 @@ export interface RankingEntry {
   avgMovesToWin: number | null;
 }
 
+export interface CategoryStats {
+  wins: number;
+  losses: number;
+  draws: number;
+  totalGames: number;
+  totalMovesInWins: number;
+}
+
 export interface UserProfile {
   id: string;
   clerkId: string;
@@ -160,4 +168,5 @@ export interface UserProfile {
     winRate: number;
     avgMovesToWin: number | null;
   };
+  statsByCategory?: Partial<Record<string, CategoryStats>>;
 }

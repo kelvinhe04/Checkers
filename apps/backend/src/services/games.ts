@@ -333,6 +333,17 @@ async function onGameFinished(snap: GameSnapshot): Promise<void> {
     inc["stats.draws"] = 1;
   }
 
+  const cat = `statsByCategory.${snap.difficulty}_${snap.boardSize}`;
+  inc[`${cat}.totalGames`] = 1;
+  if (result === "win") {
+    inc[`${cat}.wins`] = 1;
+    inc[`${cat}.totalMovesInWins`] = snap.moveCount;
+  } else if (result === "loss") {
+    inc[`${cat}.losses`] = 1;
+  } else {
+    inc[`${cat}.draws`] = 1;
+  }
+
   await users.updateOne(
     { clerkId: snap.playerId },
     { $inc: inc, $set: { updatedAt: new Date() } },

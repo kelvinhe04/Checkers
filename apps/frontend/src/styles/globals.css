@@ -1264,3 +1264,42 @@ table.table th {
   gap: 10px;
   justify-content: center;
 }
+
+/* ============================================================
+   Filter group — botones de segmento para ranking
+   ============================================================ */
+
+.filter-group {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(80, 140, 95, 0.25);
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 6px 14px;
+  background: rgba(15, 40, 22, 0.6);
+  border: none;
+  border-right: 1px solid rgba(80, 140, 95, 0.2);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+  white-space: nowrap;
+}
+
+.filter-btn:last-child {
+  border-right: none;
+}
+
+.filter-btn:hover {
+  background: rgba(40, 80, 50, 0.5);
+  color: var(--text);
+}
+
+.filter-btn.active {
+  background: rgba(60, 130, 80, 0.3);
+  color: #d6e9c8;
+}

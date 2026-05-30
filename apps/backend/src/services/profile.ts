@@ -23,5 +23,6 @@ export function toUserProfile(doc: UserDoc): UserProfile {
       winRate,
       avgMovesToWin,
     },
+    statsByCategory: doc.statsByCategory,
   };
 }

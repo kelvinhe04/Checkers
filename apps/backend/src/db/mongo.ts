@@ -23,6 +23,13 @@ export interface UserDoc {
     totalGames: number;
     totalMovesInWins: number;
   };
+  statsByCategory?: Partial<Record<string, {
+    wins: number;
+    losses: number;
+    draws: number;
+    totalGames: number;
+    totalMovesInWins: number;
+  }>>;
   createdAt: Date;
   updatedAt: Date;
 }

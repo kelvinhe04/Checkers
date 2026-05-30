@@ -458,7 +458,7 @@ function ActiveGames({
                   </label>
                   <div className="active-game-info">
                     <div className="active-game-title">
-                      {g.difficulty} · {g.boardSize}×{g.boardSize} ·
+                      {{ easy: "Fácil", medium: "Medio", hard: "Difícil" }[g.difficulty]} · {g.boardSize}×{g.boardSize} ·
                       <span
                         className="color-dot"
                         style={{

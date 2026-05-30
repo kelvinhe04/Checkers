@@ -355,7 +355,7 @@ function GameInner() {
           })()}
           <div className="stat-chip" title="Dificultad">
             <Bot size={12} />
-            <span className="stat-capitalize">{snapshot.difficulty}</span>
+            <span className="stat-capitalize">{{ easy: "Fácil", medium: "Medio", hard: "Difícil" }[snapshot.difficulty]}</span>
           </div>
           <div className="stat-chip" title="Tamaño del tablero">
             <Shuffle size={12} />

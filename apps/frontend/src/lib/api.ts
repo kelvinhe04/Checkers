@@ -150,9 +150,13 @@ export const api = {
     return request<UserProfile>("/api/me", { method: "GET" }, getToken);
   },
 
-  getRanking() {
+  getRanking(filter?: { difficulty?: Difficulty; boardSize?: BoardSize }) {
+    const params = new URLSearchParams();
+    if (filter?.difficulty) params.set("difficulty", filter.difficulty);
+    if (filter?.boardSize) params.set("boardSize", String(filter.boardSize));
+    const qs = params.toString();
     return request<{ entries: RankingEntry[] }>(
-      "/api/ranking",
+      `/api/ranking${qs ? `?${qs}` : ""}`,
       { method: "GET" },
       null,
     );
