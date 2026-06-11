@@ -16,7 +16,7 @@ export const config = {
   port: Number(process.env.BACKEND_PORT ?? 4000),
   serviceEnv: process.env.SERVICE_ENV ?? "development",
   logLevel: process.env.LOG_LEVEL ?? "info",
-  frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000",
+  frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
 
   mongo: {
     url:
@@ -41,9 +41,9 @@ export const config = {
     webhookSecret: required("STRIPE_WEBHOOK_SECRET"),
     pricePremium: required("STRIPE_PRICE_PREMIUM"),
     successUrl:
-      process.env.STRIPE_SUCCESS_URL ?? "http://localhost:3000/premium?status=success",
+      process.env.STRIPE_SUCCESS_URL ?? "http://localhost:5173/premium?status=success",
     cancelUrl:
-      process.env.STRIPE_CANCEL_URL ?? "http://localhost:3000/premium?status=cancel",
+      process.env.STRIPE_CANCEL_URL ?? "http://localhost:5173/premium?status=cancel",
   },
 } as const;
 
