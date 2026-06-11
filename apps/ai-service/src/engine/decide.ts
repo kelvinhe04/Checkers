@@ -17,10 +17,12 @@ import {
   type PieceColor,
   applyMove,
   boardSize,
+  countPieces,
   getLegalMoves,
+  opponent,
 } from "@checkers/shared";
-import { evaluate, type HeuristicProfile } from "./heuristic.js";
-import { search } from "./search.js";
+import { type HeuristicProfile } from "./heuristic.js";
+import { aStarSearch } from "./search.js";
 
 interface DifficultyConfig {
   depth: number;
@@ -30,8 +32,8 @@ interface DifficultyConfig {
 }
 
 const CONFIGS: Record<Difficulty, DifficultyConfig> = {
-  easy: { depth: 1, profile: "simple", randomness: 0.5, topK: 4 },
-  medium: { depth: 3, profile: "balanced", randomness: 0.1, topK: 2 },
+  easy: { depth: 2, profile: "simple", randomness: 0.5, topK: 4 },
+  medium: { depth: 4, profile: "balanced", randomness: 0.1, topK: 2 },
   hard: { depth: 6, profile: "rich", randomness: 0, topK: 1 },
 };
 
@@ -70,43 +72,64 @@ export function decideMove(
     };
   }
 
-  let chosen: Move;
-  let chosenScore: number;
+  // Victoria inmediata: si algún movimiento elimina todas las piezas rivales, tomarlo siempre.
+  // Independiente de forceJumps — un AI siempre debe aprovechar una victoria directa.
+  for (const m of legal) {
+    if (m.captures.length === 0) continue;
+    const nb = applyMove(board, m);
+    const counts = countPieces(nb);
+    const oppRemaining =
+      turn === "red"
+        ? counts.blackPawns + counts.blackKings
+        : counts.redPawns + counts.redKings;
+    if (oppRemaining === 0) {
+      return {
+        move: m,
+        evaluation: 100_000,
+        boardAfter: nb,
+        depth: 0,
+        computeMs: Date.now() - start,
+      };
+    }
+  }
 
-  if (cfg.depth <= 1) {
-    const scored = legal.map((m) => {
-      const nb = applyMove(board, m);
-      const score = evaluate(nb, turn, cfg.profile, options);
-      return { move: m, score };
-    });
-    scored.sort((a, b) => b.score - a.score);
+  // En endgame con pocas piezas rivales, aumentar profundidad para planear la caza.
+  const pieceCounts = countPieces(board);
+  const oppTotal =
+    turn === "red"
+      ? pieceCounts.blackPawns + pieceCounts.blackKings
+      : pieceCounts.redPawns + pieceCounts.redKings;
+  if (oppTotal <= 2) {
+    cfg.depth = Math.min(cfg.depth + 3, 10);
+  }
 
-    const pick = pickFromTop(scored, cfg);
+  // A* siempre se usa — nunca se salta el algoritmo de búsqueda.
+  const result = aStarSearch({
+    board,
+    turn,
+    depth: cfg.depth,
+    profile: cfg.profile,
+    options,
+  });
+  let chosen: Move = result.move;
+  let chosenScore: number = result.score;
+
+  // En easy, con cierta probabilidad se elige aleatoriamente entre los topK mejores.
+  if (cfg.randomness > 0 && Math.random() < cfg.randomness) {
+    const ranked = legal
+      .map((m) => {
+        const nb = applyMove(board, m);
+        const oppMoves = getLegalMoves(nb, opponent(turn), options);
+        // Si el rival no tiene movimientos tras la jugada, es victoria inmediata.
+        if (oppMoves.length === 0) return { move: m, score: 100_000 };
+        const nb2 = aStarSearch({ board: nb, turn: opponent(turn), depth: 1, profile: cfg.profile, options });
+        return { move: m, score: -nb2.score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, cfg.topK);
+    const pick = ranked[Math.floor(Math.random() * ranked.length)]!;
     chosen = pick.move;
     chosenScore = pick.score;
-  } else {
-    const result = search({
-      board,
-      turn,
-      depth: cfg.depth,
-      profile: cfg.profile,
-      options,
-    });
-    chosen = result.move;
-    chosenScore = result.score;
-
-    if (cfg.randomness > 0 && Math.random() < cfg.randomness) {
-      const ranked = legal
-        .map((m) => {
-          const nb = applyMove(board, m);
-          return { move: m, score: evaluate(nb, turn, cfg.profile, options) };
-        })
-        .sort((a, b) => b.score - a.score)
-        .slice(0, cfg.topK);
-      const pick = ranked[Math.floor(Math.random() * ranked.length)]!;
-      chosen = pick.move;
-      chosenScore = pick.score;
-    }
   }
 
   return {
@@ -116,15 +139,4 @@ export function decideMove(
     depth: cfg.depth,
     computeMs: Date.now() - start,
   };
-}
-
-function pickFromTop(
-  scored: Array<{ move: Move; score: number }>,
-  cfg: DifficultyConfig,
-): { move: Move; score: number } {
-  if (cfg.randomness > 0 && Math.random() < cfg.randomness) {
-    const top = scored.slice(0, Math.max(1, cfg.topK));
-    return top[Math.floor(Math.random() * top.length)]!;
-  }
-  return scored[0]!;
 }

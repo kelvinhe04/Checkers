@@ -139,5 +139,44 @@ export function evaluate(
   }
   score += activeCaps * 25;
 
+  // 4) Endgame: bonus de proximidad cuando el rival tiene pocas piezas.
+  // Evita que la IA haga loops sin perseguir la última pieza rival.
+  const myCount =
+    perspective === "red"
+      ? counts.redPawns + counts.redKings
+      : counts.blackPawns + counts.blackKings;
+  const oppCount =
+    perspective === "red"
+      ? counts.blackPawns + counts.blackKings
+      : counts.redPawns + counts.redKings;
+
+  if (oppCount > 0 && oppCount <= 2 && myCount > oppCount) {
+    // Recopilar posiciones de piezas propias y rivales.
+    const myPositions: Array<[number, number]> = [];
+    const oppPositions: Array<[number, number]> = [];
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        if (!isDarkSquare(row, col)) continue;
+        const piece = getPiece(board, row, col);
+        const color = getColor(piece);
+        if (!color) continue;
+        if (color === perspective) myPositions.push([row, col]);
+        else oppPositions.push([row, col]);
+      }
+    }
+
+    // Distancia mínima global: la pieza propia más cercana a cualquier pieza rival.
+    // Peso 60 por paso → moverse 1 casilla más cerca vale más que cualquier bonus posicional.
+    // Esto evita que la IA haga loops en vez de perseguir.
+    let globalMinDist = size * 2;
+    for (const [or, oc] of oppPositions) {
+      for (const [mr, mc] of myPositions) {
+        const dist = Math.max(Math.abs(or - mr), Math.abs(oc - mc));
+        if (dist < globalMinDist) globalMinDist = dist;
+      }
+    }
+    score += (size * 2 - globalMinDist) * 60;
+  }
+
   return score;
 }

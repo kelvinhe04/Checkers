@@ -93,7 +93,7 @@ docker compose up --build
 
 | Servicio   | URL                       |
 |------------|---------------------------|
-| Frontend   | http://localhost:3000     |
+| Frontend   | http://localhost:5173     |
 | Backend    | http://localhost:4000     |
 | AI Service | interno (no expuesto)     |
 | MongoDB    | localhost:27017           |

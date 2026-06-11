@@ -183,7 +183,7 @@ pnpm --filter frontend dev
 ```
 
 **URLs:**
-- Frontend: <http://localhost:3000>
+- Frontend: <http://localhost:5173>
 - Backend:  <http://localhost:4000>
 - AI Service: <http://localhost:4100> (solo en dev, acceso interno)
 - MongoDB:  `mongodb://localhost:27017`
@@ -226,7 +226,7 @@ docker compose up --build
 ```
 
 **URLs:**
-- Frontend: <http://localhost:3000>
+- Frontend: <http://localhost:5173>
 - Backend:  <http://localhost:4000>
 - AI Service: no expuesta (interna)
 - MongoDB:  `mongodb://mongo:27017`
@@ -341,14 +341,14 @@ npm install -g pnpm@9
 - Abre **Docker Desktop** (Windows/Mac)
 - Espera a que esté listo (ícono estable)
 
-### ❌ Error: "Port 3000/4000 already in use"
+### ❌ Error: "Port 5173/4000 already in use"
 ```bash
-# Encuentra el proceso usando el puerto (ej. 3000)
-lsof -i :3000  # macOS/Linux
-Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess  # PowerShell Windows
+# Encuentra el proceso usando el puerto (ej. 5173)
+lsof -i :5173  # macOS/Linux
+Get-Process -Id (Get-NetTCPConnection -LocalPort 5173).OwningProcess  # PowerShell Windows
 
 # Mátalo o usa un puerto diferente:
-VITE_PORT=3001 pnpm --filter frontend dev
+VITE_PORT=5174 pnpm --filter frontend dev
 ```
 
 ### ❌ Error: "MongoDB connection refused"
@@ -379,7 +379,7 @@ VITE_PORT=3001 pnpm --filter frontend dev
 
 ```bash
 # Todos los servicios deben responder
-curl http://localhost:3000           # Frontend
+curl http://localhost:5173           # Frontend
 curl http://localhost:4000/health    # Backend (si existe)
 curl http://localhost:4100/health    # AI Service
 ```

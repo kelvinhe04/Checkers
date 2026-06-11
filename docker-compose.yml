@@ -62,8 +62,8 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PRICE_PREMIUM: ${STRIPE_PRICE_PREMIUM:-}
-      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost:3000/premium?status=success}
-      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost:3000/premium?status=cancel}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost:5173/premium?status=success}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost:5173/premium?status=cancel}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       SERVICE_ENV: ${SERVICE_ENV:-development}
     ports:
@@ -91,7 +91,7 @@ services:
       PUBLIC_BACKEND_WS_URL: ${PUBLIC_BACKEND_WS_URL:-ws://localhost:4000/ws}
       CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${FRONTEND_PORT:-5173}:3000"
 
 volumes:
   mongo_data:
