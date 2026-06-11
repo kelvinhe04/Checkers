@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import type { Logger } from "pino";
 import { logger } from "./logger.js";
 
 const CORRELATION_HEADER = "x-correlation-id";
@@ -33,6 +34,6 @@ export const correlationMiddleware: MiddlewareHandler = async (c, next) => {
 declare module "hono" {
   interface ContextVariableMap {
     correlationId: string;
-    log: ReturnType<typeof logger.child>;
+    log: Logger;
   }
 }

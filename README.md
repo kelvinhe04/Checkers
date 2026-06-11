@@ -32,9 +32,9 @@ Monorepo del Proyecto 2 (ver `PRD.md`). Arquitectura de **microservicios** con *
 │   │   ├── tsconfig.json
 │   │   └── .env.example
 │   │
-│   └── ai-service/               Hono + Bun + Minimax Chess Engine
+│   └── ai-service/               Hono + Bun + A* (A-Star) Chess Engine
 │       ├── src/
-│       │   ├── engine/           Lógica de damas + algoritmo minimax (3 niveles)
+  │       │   ├── engine/           Lógica de damas + algoritmo A* (3 niveles)
 │       │   ├── routes/           Hono route handlers (/move, /health)
 │       │   └── index.ts          Entry point (Hono app)
 │       ├── package.json
@@ -84,7 +84,7 @@ Monorepo del Proyecto 2 (ver `PRD.md`). Arquitectura de **microservicios** con *
 ### 🤖 Servicio de IA
 - **Framework:** Hono 4
 - **Runtime:** Bun ≥ 1.1
-- **Algoritmo:** Minimax con 3 niveles de dificultad
+- **Algoritmo:** A* (A-Star) con 3 niveles de dificultad
 - **Validación:** Zod
 - **Logging:** Pino (JSON estructurado)
 - **Lenguaje:** TypeScript
@@ -282,7 +282,7 @@ docker compose up --build
 
 | Endpoint | Método | Request | Response | Descripción |
 |----------|--------|---------|----------|-------------|
-| `/move` | POST | `{ board: number[], turn: 1\|2, difficulty: 1\|2\|3 }` | `{ move: [from, to] }` | Calcula la mejor jugada (minimax) |
+| `/move` | POST | `{ board: number[], turn: 1\|2, difficulty: 1\|2\|3 }` | `{ move: [from, to] }` | Calcula la mejor jugada (A*) |
 | `/health` | GET | — | `{ status: "ok" }` | Health check |
 
 ## Desarrollo

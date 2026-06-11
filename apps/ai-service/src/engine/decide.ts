@@ -21,7 +21,7 @@ import {
   getLegalMoves,
   opponent,
 } from "@checkers/shared";
-import { type HeuristicProfile } from "./heuristic.js";
+import { evaluate, type HeuristicProfile } from "./heuristic.js";
 import { aStarSearch } from "./search.js";
 
 interface DifficultyConfig {
@@ -115,6 +115,7 @@ export function decideMove(
   let chosenScore: number = result.score;
 
   // En easy, con cierta probabilidad se elige aleatoriamente entre los topK mejores.
+  // Se simula 1 ply del oponente: el rival elegirá el movimiento que minimice el score de la IA.
   if (cfg.randomness > 0 && Math.random() < cfg.randomness) {
     const ranked = legal
       .map((m) => {
@@ -122,8 +123,14 @@ export function decideMove(
         const oppMoves = getLegalMoves(nb, opponent(turn), options);
         // Si el rival no tiene movimientos tras la jugada, es victoria inmediata.
         if (oppMoves.length === 0) return { move: m, score: 100_000 };
-        const nb2 = aStarSearch({ board: nb, turn: opponent(turn), depth: 1, profile: cfg.profile, options });
-        return { move: m, score: -nb2.score };
+        // El oponente jugará el movimiento que dé el peor score para la IA.
+        let worstScoreForMe = Infinity;
+        for (const om of oppMoves) {
+          const afterOpp = applyMove(nb, om);
+          const s = evaluate(afterOpp, turn, cfg.profile, options);
+          if (s < worstScoreForMe) worstScoreForMe = s;
+        }
+        return { move: m, score: worstScoreForMe };
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, cfg.topK);

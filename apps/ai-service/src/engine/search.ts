@@ -1,19 +1,20 @@
 // =========================================================================
-// Búsqueda A* para selección de jugadas en Damas.
+// Búsqueda A* para juegos de adversarios (Damas).
 //
-// A diferencia del minimax (DFS exhaustivo con poda alfa-beta), A* explora
-// el árbol de juego en orden "mejor primero" usando una función de prioridad:
+// En cada nivel del árbol alternamos entre MAX (turno de la IA) y MIN
+// (turno del oponente). La IA busca maximizar su evaluación; el oponente
+// busca minimizarla. El A* guía la exploración con un heap ordenado por
+// f(n) = g(n) + h(n), donde:
 //
-//   f(n) = g(n) + h(n)
-//   g(n) = profundidad del nodo (número de movimientos desde la raíz)
-//   h(n) = H_OFFSET - evaluate(n, perspectiva)
-//          → posiciones mejores para la IA tienen h menor → mayor prioridad
+//   g(n) = profundidad del nodo
+//   h(n) = heurística adaptada al turno:
+//          MAX (IA)    → h = H_OFFSET - evaluate(board)  [menor = mejor]
+//          MIN (rival) → h = H_OFFSET + evaluate(board)  [menor = peor para IA]
 //
-// El algoritmo concentra la búsqueda en las ramas más prometedoras antes de
-// explorar opciones menos favorables, usando una cola de prioridad (min-heap).
+// Se usa un closed set para evitar re-expandir estados duplicados.
 //
-// Parada: al alcanzar la profundidad máxima O el límite de nodos (MAX_NODES).
-// Se devuelve el primer movimiento de la rama con mejor evaluación hallada.
+// Parada: profundidad máxima alcanzada, límite de nodos (MAX_NODES) o
+//         fin de partida en la rama.
 // =========================================================================
 
 import {
@@ -24,6 +25,7 @@ import {
   applyMove,
   getLegalMoves,
   opponent,
+  serializeBoard,
 } from "@checkers/shared";
 import { evaluate, type HeuristicProfile } from "./heuristic.js";
 
@@ -44,13 +46,14 @@ interface SearchParams {
 // Nodo en el árbol de búsqueda A*.
 interface AStarNode {
   board: Board;
-  turn: PieceColor;     // de quién es el turno en este estado
-  nodeDepth: number;    // profundidad desde la raíz
-  g: number;            // coste acumulado (= nodeDepth)
-  h: number;            // heurística estimada al objetivo
-  f: number;            // g + h → criterio de prioridad (menor = mejor)
-  firstMove: Move;      // primer movimiento desde la raíz (para la decisión final)
-  score: number;        // evaluación del tablero desde la perspectiva de la IA
+  turn: PieceColor;
+  nodeDepth: number;
+  g: number;
+  h: number;
+  f: number;
+  firstMove: Move;
+  score: number;        // evaluación desde la perspectiva de la IA
+  isMax: boolean;     // true = turno de la IA (MAX), false = turno del oponente (MIN)
 }
 
 // -------------------------------------------------------------------------
@@ -113,7 +116,7 @@ const H_OFFSET = 200_000;
 const MAX_NODES = 50_000;
 
 // -------------------------------------------------------------------------
-// Función principal A*: devuelve el mejor movimiento encontrado por A*.
+// Función principal A*: devuelve el mejor movimiento encontrado.
 // -------------------------------------------------------------------------
 export function aStarSearch({
   board,
@@ -134,13 +137,19 @@ export function aStarSearch({
   let totalNodes = 0;
 
   const openSet = new MinHeap();
+  const closedSet = new Set<string>();
 
   // Insertar un nodo por cada movimiento legal desde la raíz.
   for (const m of moves) {
     const nb = applyMove(board, m);
+    const boardKey = serializeBoard(nb);
+    if (closedSet.has(boardKey)) continue;
+    closedSet.add(boardKey);
+
     const score = evaluate(nb, perspective, profile, options);
+    const isMax = opponent(turn) === perspective; // después de este movimiento, le toca al oponente
     const g = 1;
-    const h = H_OFFSET - score;
+    const h = isMax ? H_OFFSET - score : H_OFFSET + score;
     openSet.push({
       board: nb,
       turn: opponent(turn),
@@ -150,6 +159,7 @@ export function aStarSearch({
       f: g + h,
       firstMove: m,
       score,
+      isMax,
     });
     totalNodes++;
   }
@@ -157,7 +167,7 @@ export function aStarSearch({
   while (openSet.size > 0 && totalNodes < MAX_NODES) {
     const node = openSet.pop()!;
 
-    // Nodo terminal por profundidad: registrar si es el mejor hallado.
+    // Nodo terminal por profundidad.
     if (node.nodeDepth >= depth) {
       if (node.score > bestScore) {
         bestScore = node.score;
@@ -170,7 +180,6 @@ export function aStarSearch({
 
     // Fin de partida en esta rama.
     if (nextMoves.length === 0) {
-      // Si el turno que no tiene movimientos es la IA → derrota; si es el rival → victoria.
       const termScore =
         node.turn === perspective
           ? -90_000 - node.nodeDepth
@@ -184,14 +193,16 @@ export function aStarSearch({
 
     nextMoves.sort((a, b) => b.captures.length - a.captures.length);
 
-    // Expandir todos los movimientos sin importar el turno.
-    // La heurística guía la búsqueda: capturas aumentan el material (score alto)
-    // → h bajo → f bajo → mayor prioridad en el heap → A* las explora primero.
     for (const m of nextMoves) {
       const nb = applyMove(node.board, m);
+      const boardKey = serializeBoard(nb);
+      if (closedSet.has(boardKey)) continue;
+      closedSet.add(boardKey);
+
       const score = evaluate(nb, perspective, profile, options);
+      const childIsMax = opponent(node.turn) === perspective;
       const g = node.g + 1;
-      const h = H_OFFSET - score;
+      const h = childIsMax ? H_OFFSET - score : H_OFFSET + score;
       openSet.push({
         board: nb,
         turn: opponent(node.turn),
@@ -201,6 +212,7 @@ export function aStarSearch({
         f: g + h,
         firstMove: node.firstMove,
         score,
+        isMax: childIsMax,
       });
       totalNodes++;
     }
