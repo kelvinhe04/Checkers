@@ -14,7 +14,8 @@
     "typecheck": "pnpm -r run typecheck",
     "docker:up": "docker compose up --build",
     "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
-    "docker:down": "docker compose down -v"
+    "docker:down": "docker compose down -v",
+    "test": "pnpm -r run test"
   },
   "engines": {
     "node": ">=20",

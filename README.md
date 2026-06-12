@@ -1,4 +1,15 @@
-# Checkers — Damas 8x8 con IA, ranking, pagos y estado remoto
+# Checkers — Damas Inglesas/Americanas 8x8 con IA, ranking, pagos y estado remoto
+
+## Variante implementada: Damas Inglesas/Americanas (English Draughts)
+
+- **Tablero:** 8×8, 12 piezas por bando, solo casillas oscuras.
+- **Movimiento:** peones avanzan en diagonal hacia delante (una casilla). Damas se mueven en cualquier diagonal (una casilla).
+- **Captura:** peones capturan solo hacia delante; damas en cualquier diagonal. Captura obligatoria (forceJumps).
+- **Capturas múltiples:** la pieza debe seguir capturando mientras sea posible en el mismo turno.
+- **Coronación:** al alcanzar la última fila, el peón se convierte en dama. Si se corona durante una captura múltiple, el turno termina.
+- **Fin de partida:** pierde el jugador que se queda sin piezas o sin movimientos legales.
+
+---
 
 Monorepo del Proyecto 2 (ver `PRD.md`). Arquitectura de **microservicios** con **3 componentes independientes**: frontend React, backend API REST, y servicio de IA. Todo contenedorizado con **Docker Compose** y listo para desarrollo local o despliegue.
 
@@ -44,9 +55,9 @@ Monorepo del Proyecto 2 (ver `PRD.md`). Arquitectura de **microservicios** con *
 ├── packages/
 │   └── shared/                   Código compartido entre los 3 servicios
 │       ├── src/
-│       │   ├── types.ts          Tipos TypeScript compartidas (Game, User, etc.)
-│       │   ├── schemas.ts        Zod schemas para validación
-│       │   └── rules.ts          Reglas de las damas
+│       │   ├── types.ts          Tipos TypeScript compartidos (Game, User, etc.)
+│       │   ├── checkers.ts       Motor de reglas de damas (movimientos, capturas, estado)
+│       │   └── index.ts          Re-exportaciones públicas del paquete
 │       └── package.json
 │
 ├── docker-compose.yml            Producción: todos los servicios contenedorizados
@@ -282,8 +293,57 @@ docker compose up --build
 
 | Endpoint | Método | Request | Response | Descripción |
 |----------|--------|---------|----------|-------------|
-| `/move` | POST | `{ board: number[], turn: 1\|2, difficulty: 1\|2\|3 }` | `{ move: [from, to] }` | Calcula la mejor jugada (A*) |
+| `/move` | POST | Ver esquema abajo | Ver esquema abajo | Calcula la mejor jugada (A*) |
 | `/health` | GET | — | `{ status: "ok" }` | Health check |
+
+**Request `/move`:**
+```json
+{
+  "board": [[".", "b", ".", ...], ...],
+  "turn": "red" | "black",
+  "difficulty": "easy" | "medium" | "hard",
+  "options": { "forceJumps": true, "showMoves": true }
+}
+```
+
+- `board`: array de arrays de strings `"."`, `"r"` (peón rojo), `"R"` (dama roja), `"b"` (peón negro), `"B"` (dama negra). Tamaño 8×8, 10×10 o 12×12.
+- `turn`: color que mueve.
+- `difficulty`: nivel de la IA (afecta profundidad A* y heurística).
+- `options`: reglas opcionales (por defecto `forceJumps: true`).
+
+**Response `/move`:**
+```json
+{
+  "move": {
+    "from": { "row": 5, "col": 2 },
+    "to":   { "row": 4, "col": 3 },
+    "captures": [],
+    "promoted": false
+  },
+  "evaluation": 120,
+  "boardAfter": [[".", ...], ...],
+  "depth": 4,
+  "computeMs": 38
+}
+```
+
+## Cómo se invoca el microservicio A*
+
+El backend llama al microservicio IA durante el turno de la computadora:
+
+```
+Frontend → POST /api/games/:id/move → Backend → POST /move → AI Service (A*)
+                                                              ↓
+Frontend ← WebSocket actualiza tablero ← Backend ← { move, boardAfter }
+```
+
+1. El jugador envía su movimiento al backend (`POST /api/games/:id/move`).
+2. El backend valida el movimiento, lo aplica y detecta si la partida terminó.
+3. Si la partida sigue activa, el backend hace `POST http://ai-service:4100/move` con el tablero actual, el turno de la IA y la dificultad.
+4. El microservicio ejecuta **A\*** (g(n) + h(n), min-heap, closed set, alternancia MAX/MIN) y devuelve el movimiento elegido con la evaluación y el tablero resultante.
+5. El backend aplica el movimiento de la IA, actualiza MongoDB y notifica al frontend vía WebSocket.
+
+En Docker, el backend se comunica con el AI service usando el hostname interno `ai-service:4100` (red `checkers-net`). En desarrollo local, usa `localhost:4100`.
 
 ## Desarrollo
 
@@ -297,10 +357,25 @@ pnpm typecheck
 
 ### Testing
 
-Actualmente no hay tests. Para agregar:
-- **Frontend:** Vitest + React Testing Library
-- **Backend:** Vitest + Supertest
-- **AI Service:** Vitest
+El proyecto incluye tests unitarios ejecutables con `bun test`:
+
+```bash
+# Todos los tests (motor de reglas + IA)
+pnpm test
+
+# Solo motor de reglas (packages/shared)
+pnpm --filter @checkers/shared test
+
+# Solo microservicio IA (apps/ai-service)
+pnpm --filter ai-service test
+```
+
+**Cobertura actual:**
+
+| Paquete | Archivo de tests | Casos |
+|---------|-----------------|-------|
+| `packages/shared` | `src/__tests__/checkers.test.ts` | 28 — motor de reglas: tablero inicial, movimientos legales, capturas, coronación, estado de partida |
+| `apps/ai-service` | `src/engine/__tests__/search.test.ts` | 7 — A\* search y `decideMove` para los 3 niveles de dificultad |
 
 ## Observabilidad
 
@@ -384,6 +459,15 @@ curl http://localhost:4000/health    # Backend (si existe)
 curl http://localhost:4100/health    # AI Service
 ```
 
+## Limitaciones conocidas
+
+- **A\* en juegos adversariales:** A* no es el algoritmo óptimo para juegos de suma cero — minimax con poda alpha-beta sería más eficiente. Se usa A* por requerimiento de la rúbrica. El límite de `MAX_NODES = 50 000` evita tiempos de cómputo excesivos pero puede truncar la búsqueda antes de alcanzar la profundidad máxima en posiciones muy abiertas.
+- **Tableros 10×10 y 12×12:** la UI y el backend soportan múltiples tamaños, pero la demo principal es 8×8. La profundidad del A* se reduce automáticamente en tableros más grandes para no exceder el tiempo de respuesta.
+- **Webhooks Stripe en local:** requiere Stripe CLI (`stripe listen`) corriendo en paralelo; sin él, el estado premium no se actualiza hasta usar `/api/billing/sync`.
+- **Tests de integración:** no se incluyen tests E2E con Playwright ni tests de las rutas del backend. Los tests cubren el motor de reglas (`packages/shared`) y el algoritmo A* (`apps/ai-service`).
+- **Empate no implementado:** el juego detecta victoria pero no empate por repetición de posición ni por regla de los 40 movimientos.
+- **Sin IA cooperativa:** si el jugador humano no tiene movimientos, el backend reporta derrota; no existe lógica de oferta de tablas.
+
 ## Referencias
 
 - 📄 **Especificación completa:** [`PRD.md`](./PRD.md)
@@ -404,4 +488,4 @@ curl http://localhost:4100/health    # AI Service
 
 ---
 
-**Última actualización:** 2025-05-27 | Proyecto 2 del curso Soft 9
+**Última actualización:** 2026-06-11 | Proyecto 2 del curso Soft 9
